@@ -132,9 +132,6 @@ exports.transferFunds = async (req, res) => {
             });
         }
 
-        // Fetch sender's profile for the recipient's transaction record
-        const sender = await User.findById(req.user.id);
-
         // BEGIN ATOMIC TRANSACTION
         await client.query("BEGIN");
 
