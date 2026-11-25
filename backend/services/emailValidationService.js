@@ -202,11 +202,13 @@ function isDisposableEmail(domain) {
  * - Validates MX records, with A/AAAA fallback for domains accepting direct mail
  * - 6-second timeout safeguard
  */
-async function verifyDomainDns(domain, timeoutMs = 6000) {
+async function verifyDomainDns(domain, timeoutMs = 2500) {
     const cleanDomain = domain.toLowerCase().trim();
 
-    // Fast-path / resilience check for established major providers
-    const isMajor = KNOWN_MAJOR_DOMAINS.has(cleanDomain);
+    // Fast-path: Established major email providers don't need network DNS lookups
+    if (KNOWN_MAJOR_DOMAINS.has(cleanDomain)) {
+        return { valid: true, isKnownProvider: true };
+    }
 
     const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error("DNS_TIMEOUT")), timeoutMs);
