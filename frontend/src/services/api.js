@@ -17,8 +17,11 @@ API.interceptors.response.use(
     (error) => {
         const status = error.response?.status;
         const path = window.location.pathname;
+        const url = error.config?.url || "";
+        const msg = String(error.response?.data?.message || "").toLowerCase();
+        const isPinOrPaymentError = msg.includes("pin") || url.includes("/payments") || url.includes("/set-pin");
 
-        if (status === 401 && !path.includes("/login") && !path.includes("/register")) {
+        if (status === 401 && !path.includes("/login") && !path.includes("/register") && !isPinOrPaymentError) {
             localStorage.removeItem("token");
             localStorage.removeItem("user");
             window.location.href = "/login";

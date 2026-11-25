@@ -237,7 +237,9 @@ function Payments() {
 
         setSettingPin(true);
         try {
-            await API.post("/auth/set-pin", { pin: cleanNew });
+            await API.post("/auth/set-pin", { pin: cleanNew }).catch(() =>
+                API.post("/payments/set-pin", { pin: cleanNew })
+            );
             if (updateUser) {
                 updateUser({ has_pin: true });
             }

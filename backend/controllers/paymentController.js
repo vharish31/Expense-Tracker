@@ -70,7 +70,7 @@ exports.transferFunds = async (req, res) => {
         // Verify Security PIN
         const isPinCorrect = await bcrypt.compare(cleanPin, sender.payment_pin);
         if (!isPinCorrect) {
-            return res.status(401).json({
+            return res.status(400).json({
                 message: "Incorrect Security PIN. Payment was declined and no money was deducted."
             });
         }
