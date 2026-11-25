@@ -10,11 +10,18 @@ function createToken(userId) {
 
 exports.register = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, phone } = req.body;
 
-        if (!name || !email || !password) {
+        if (!name || !email || !password || !phone) {
             return res.status(400).json({
-                message: "Name, email and password are required"
+                message: "Name, email, mobile number and password are required"
+            });
+        }
+
+        const cleanPhone = String(phone).replace(/\D/g, "").slice(-10);
+        if (cleanPhone.length !== 10) {
+            return res.status(400).json({
+                message: "Please enter a valid 10-digit mobile number"
             });
         }
 
@@ -24,11 +31,17 @@ exports.register = async (req, res) => {
             });
         }
 
-        const existing = await User.findByEmail(email.trim().toLowerCase());
-
-        if (existing) {
+        const existingEmail = await User.findByEmail(email.trim().toLowerCase());
+        if (existingEmail) {
             return res.status(409).json({
                 message: "An account with this email already exists"
+            });
+        }
+
+        const existingPhone = await User.findByPhone(cleanPhone);
+        if (existingPhone) {
+            return res.status(409).json({
+                message: "An account with this mobile number already exists"
             });
         }
 
@@ -36,13 +49,19 @@ exports.register = async (req, res) => {
         const user = await User.createUser({
             name: name.trim(),
             email: email.trim().toLowerCase(),
+            phone: cleanPhone,
             password: hashedPassword
         });
 
         res.status(201).json({
             message: "Registered successfully",
             token: createToken(user.id),
-            user
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone
+            }
         });
     } catch (error) {
         console.error("Register error:", error.message);
@@ -78,7 +97,8 @@ exports.login = async (req, res) => {
             user: {
                 id: user.id,
                 name: user.name,
-                email: user.email
+                email: user.email,
+                phone: user.phone
             }
         });
     } catch (error) {

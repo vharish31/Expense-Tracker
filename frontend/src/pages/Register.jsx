@@ -5,7 +5,7 @@ import { useAuth } from "../context/auth";
 function Register() {
     const { register, isAuthenticated } = useAuth();
     const navigate = useNavigate();
-    const [form, setForm] = useState({ name: "", email: "", password: "" });
+    const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -85,6 +85,30 @@ function Register() {
                                 required
                                 value={form.email}
                                 onChange={(e) => setForm({ ...form, email: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Mobile Number Input */}
+                    <div className="mb-3">
+                        <label className="form-label small fw-bold text-muted mb-1">Mobile Number (For P2P Payments)</label>
+                        <div className="input-group input-group-auth">
+                            <span className="input-group-text auth-input-icon">
+                                <i className="bi bi-telephone"></i>
+                            </span>
+                            <span className="input-group-text bg-transparent border-0 ps-0 pe-2 text-muted fw-bold">+91</span>
+                            <input
+                                type="tel"
+                                className="form-control auth-input-field ps-1"
+                                placeholder="10-digit mobile number"
+                                required
+                                maxLength={10}
+                                pattern="[0-9]{10}"
+                                value={form.phone}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                                    setForm({ ...form, phone: val });
+                                }}
                             />
                         </div>
                     </div>

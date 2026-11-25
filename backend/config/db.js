@@ -87,6 +87,17 @@ async function initDb() {
     `);
 
     await pool.query(`
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS phone VARCHAR(20)
+    `);
+
+    await pool.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS users_phone_key
+        ON users(phone)
+        WHERE phone IS NOT NULL
+    `);
+
+    await pool.query(`
         ALTER TABLE transactions
         ADD COLUMN IF NOT EXISTS ref_no VARCHAR(100)
     `);

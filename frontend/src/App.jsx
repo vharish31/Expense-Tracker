@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Transactions from "./pages/Transactions";
+import Payments from "./pages/Payments";
 
 function App() {
     return (
@@ -27,6 +28,7 @@ function App() {
                         >
                             <Route path="/" element={<Dashboard />} />
                             <Route path="/transactions" element={<Transactions />} />
+                            <Route path="/payments" element={<Payments />} />
                             <Route path="/analytics" element={<Analytics />} />
                             <Route path="/budget" element={<Budget />} />
                         </Route>
