@@ -8,12 +8,12 @@ const DEFAULT_CATEGORIES = [
     { name: "Salary", type: "Income" }
 ];
 
-exports.createUser = async ({ name, email, password, phone, payment_pin }) => {
+exports.createUser = async ({ name, email, password, phone, payment_pin, is_email_verified = true }) => {
     const result = await db.query(
-        `INSERT INTO users (name, email, password, phone, payment_pin)
-         VALUES ($1, $2, $3, $4, $5)
-         RETURNING id, name, email, phone, (payment_pin IS NOT NULL) AS has_pin, created_at`,
-        [name, email, password, phone || null, payment_pin || null]
+        `INSERT INTO users (name, email, password, phone, payment_pin, is_email_verified)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING id, name, email, phone, (payment_pin IS NOT NULL) AS has_pin, is_email_verified, created_at`,
+        [name, email, password, phone || null, payment_pin || null, is_email_verified]
     );
 
     const user = result.rows[0];

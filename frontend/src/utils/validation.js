@@ -50,9 +50,11 @@ export function validateName(name) {
 /**
  * 2. Email Validation
  * - Required
- * - Valid format
- * - Max 50 characters
- * - No spaces
+ * - Max 254 characters
+ * - Local part max 64 characters
+ * - Domain max 253 characters, labels max 63 characters, no edge hyphens
+ * - TLD minimum 2 letters
+ * - No whitespace, no consecutive dots
  * - Lowercase normalized
  * Error: "Please enter a valid email address."
  */
@@ -65,18 +67,57 @@ export function validateEmail(email) {
         return { valid: false, error: "Please enter a valid email address." };
     }
 
-    const normalized = email.trim().toLowerCase();
-
-    if (normalized.length > 50) {
+    const trimmed = email.trim();
+    if (trimmed.length > 254) {
         return { valid: false, error: "Please enter a valid email address." };
     }
 
-    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
-    if (!emailRegex.test(normalized)) {
+    const atParts = trimmed.split("@");
+    if (atParts.length !== 2) {
         return { valid: false, error: "Please enter a valid email address." };
     }
 
-    return { valid: true, error: "", value: normalized };
+    const [localPart, rawDomain] = atParts;
+    const domain = rawDomain.toLowerCase();
+
+    if (!localPart || localPart.length > 64) {
+        return { valid: false, error: "Please enter a valid email address." };
+    }
+    if (localPart.startsWith(".") || localPart.endsWith(".") || localPart.includes("..")) {
+        return { valid: false, error: "Please enter a valid email address." };
+    }
+
+    const localRegex = /^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+$/;
+    if (!localRegex.test(localPart)) {
+        return { valid: false, error: "Please enter a valid email address." };
+    }
+
+    if (!domain || domain.length > 253 || domain.startsWith(".") || domain.endsWith(".") || domain.includes("..")) {
+        return { valid: false, error: "Please enter a valid email address." };
+    }
+
+    const labels = domain.split(".");
+    if (labels.length < 2) {
+        return { valid: false, error: "Please enter a valid email address." };
+    }
+
+    for (let i = 0; i < labels.length; i++) {
+        const label = labels[i];
+        if (!label || label.length > 63 || label.startsWith("-") || label.endsWith("-")) {
+            return { valid: false, error: "Please enter a valid email address." };
+        }
+        if (!/^[a-z0-9-]+$/i.test(label)) {
+            return { valid: false, error: "Please enter a valid email address." };
+        }
+    }
+
+    const tld = labels[labels.length - 1];
+    if (tld.length < 2 || !/^[a-z]+$/i.test(tld)) {
+        return { valid: false, error: "Please enter a valid email address." };
+    }
+
+    const normalized = `${localPart.toLowerCase()}@${domain}`;
+    return { valid: true, error: "", value: normalized, domain };
 }
 
 /**

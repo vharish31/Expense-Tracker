@@ -1,5 +1,6 @@
 const { Pool } = require("pg");
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 
 const poolConfig = process.env.DATABASE_URL
     ? {
@@ -94,6 +95,34 @@ async function initDb() {
     await pool.query(`
         ALTER TABLE users
         ADD COLUMN IF NOT EXISTS payment_pin VARCHAR(255)
+    `);
+
+    await pool.query(`
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS is_email_verified BOOLEAN DEFAULT FALSE
+    `);
+
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS email_verifications (
+            id SERIAL PRIMARY KEY,
+            email VARCHAR(255) NOT NULL,
+            otp_hash VARCHAR(255) NOT NULL,
+            attempts INTEGER DEFAULT 0,
+            expires_at TIMESTAMP NOT NULL,
+            last_sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            verified BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
+    await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_email_verifications_email
+        ON email_verifications(email)
+    `);
+
+    await pool.query(`
+        ALTER TABLE email_verifications
+        ADD COLUMN IF NOT EXISTS verified_at TIMESTAMP
     `);
 
     await pool.query(`

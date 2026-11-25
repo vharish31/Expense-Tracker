@@ -47,36 +47,76 @@ function validateName(name) {
 /**
  * Email Validation
  * - Required
- * - Valid RFC-compliant email pattern
- * - Max 50 characters
+ * - Max length: 254 characters
+ * - Local part max: 64 characters
+ * - Exactly one @ symbol
  * - No whitespace
+ * - No consecutive dots
+ * - Local part cannot start or end with a dot
+ * - Domain cannot start or end with a dot, labels max 63 characters, no edge hyphens
+ * - TLD minimum 2 alphabetic characters
  * - Normalized to lowercase
  */
 function validateEmail(email) {
     if (!email || typeof email !== "string") {
-        return { valid: false, error: "Please enter your email address." };
+        return { valid: false, error: "Please enter a valid email address." };
     }
 
     if (/\s/.test(email)) {
         return { valid: false, error: "Please enter a valid email address." };
     }
 
-    const normalized = email.trim().toLowerCase();
-
-    if (normalized.length === 0) {
-        return { valid: false, error: "Please enter your email address." };
-    }
-
-    if (normalized.length > 50) {
+    const trimmed = email.trim();
+    if (trimmed.length === 0 || trimmed.length > 254) {
         return { valid: false, error: "Please enter a valid email address." };
     }
 
-    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
-    if (!emailRegex.test(normalized)) {
+    const atParts = trimmed.split("@");
+    if (atParts.length !== 2) {
         return { valid: false, error: "Please enter a valid email address." };
     }
 
-    return { valid: true, value: normalized };
+    const [localPart, rawDomain] = atParts;
+    const domain = rawDomain.toLowerCase();
+
+    if (!localPart || localPart.length > 64) {
+        return { valid: false, error: "Please enter a valid email address." };
+    }
+    if (localPart.startsWith(".") || localPart.endsWith(".") || localPart.includes("..")) {
+        return { valid: false, error: "Please enter a valid email address." };
+    }
+
+    const localRegex = /^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+$/;
+    if (!localRegex.test(localPart)) {
+        return { valid: false, error: "Please enter a valid email address." };
+    }
+
+    if (!domain || domain.length > 253 || domain.startsWith(".") || domain.endsWith(".") || domain.includes("..")) {
+        return { valid: false, error: "Please enter a valid email address." };
+    }
+
+    const labels = domain.split(".");
+    if (labels.length < 2) {
+        return { valid: false, error: "Please enter a valid email address." };
+    }
+
+    for (let i = 0; i < labels.length; i++) {
+        const label = labels[i];
+        if (!label || label.length > 63 || label.startsWith("-") || label.endsWith("-")) {
+            return { valid: false, error: "Please enter a valid email address." };
+        }
+        if (!/^[a-z0-9-]+$/i.test(label)) {
+            return { valid: false, error: "Please enter a valid email address." };
+        }
+    }
+
+    const tld = labels[labels.length - 1];
+    if (tld.length < 2 || !/^[a-z]+$/i.test(tld)) {
+        return { valid: false, error: "Please enter a valid email address." };
+    }
+
+    const normalized = `${localPart.toLowerCase()}@${domain}`;
+    return { valid: true, value: normalized, localPart: localPart.toLowerCase(), domain };
 }
 
 /**
