@@ -204,10 +204,12 @@ function Register() {
                 )}
 
                 {/* Registration Form */}
-                <form onSubmit={handleSubmit} noValidate>
+                <form onSubmit={handleSubmit}>
                     {/* 1. Full Name */}
                     <div className="mb-3">
-                        <label className="form-label small fw-bold text-muted mb-1">Full Name</label>
+                        <label className="form-label small fw-bold text-muted mb-1">
+                            Full Name <span className="text-danger">*</span>
+                        </label>
                         <div
                             className={`input-group input-group-auth ${
                                 isInvalid("name") ? "is-invalid" : isValid("name") ? "is-valid" : ""
@@ -242,7 +244,9 @@ function Register() {
 
                     {/* 2. Email Address */}
                     <div className="mb-3">
-                        <label className="form-label small fw-bold text-muted mb-1">Email Address</label>
+                        <label className="form-label small fw-bold text-muted mb-1">
+                            Email Address <span className="text-danger">*</span>
+                        </label>
                         <div
                             className={`input-group input-group-auth ${
                                 isInvalid("email") ? "is-invalid" : isValid("email") ? "is-valid" : ""
@@ -278,7 +282,7 @@ function Register() {
                     {/* 3. Mobile Number Input (10-Digit Indian) */}
                     <div className="mb-3">
                         <label className="form-label small fw-bold text-muted mb-1">
-                            Mobile Number (For P2P Payments)
+                            Mobile Number (For P2P Payments) <span className="text-danger">*</span>
                         </label>
                         <div
                             className={`input-group input-group-auth ${
@@ -316,7 +320,9 @@ function Register() {
 
                     {/* 4. Password Input with Strength Indicator */}
                     <div className="mb-3">
-                        <label className="form-label small fw-bold text-muted mb-1">Password</label>
+                        <label className="form-label small fw-bold text-muted mb-1">
+                            Password <span className="text-danger">*</span>
+                        </label>
                         <div
                             className={`input-group input-group-auth ${
                                 isInvalid("password") ? "is-invalid" : isValid("password") ? "is-valid" : ""
@@ -411,7 +417,7 @@ function Register() {
                     <div className="mb-3">
                         <div className="d-flex justify-content-between align-items-center mb-1">
                             <label className="form-label small fw-bold text-muted mb-0">
-                                4-Digit Payment Security PIN
+                                4-Digit Payment Security PIN <span className="text-danger">*</span>
                             </label>
                             <span className="badge bg-light text-primary border small" style={{ fontSize: "0.7rem" }}>
                                 Transfers
@@ -470,7 +476,7 @@ function Register() {
                     {/* 7. Confirm 4-Digit Security PIN */}
                     <div className="mb-4">
                         <label className="form-label small fw-bold text-muted mb-1">
-                            Confirm 4-Digit Payment PIN
+                            Confirm 4-Digit Payment PIN <span className="text-danger">*</span>
                         </label>
                         <div
                             className={`input-group input-group-auth ${
