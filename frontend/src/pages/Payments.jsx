@@ -173,18 +173,11 @@ function Payments() {
     return (
         <div className="page-container">
             {/* Page Header */}
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 className="page-title mb-1">Instant Payments</h2>
-                    <p className="text-muted small mb-0">
-                        Pay any registered user instantly using their 10-digit mobile number.
-                    </p>
-                </div>
-                <div className="d-flex align-items-center gap-2">
-                    <span className="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-bold" style={{ fontSize: "0.85rem" }}>
-                        <i className="bi bi-shield-check me-1"></i> 256-Bit Encrypted Transfer
-                    </span>
-                </div>
+            <div className="mb-4">
+                <h2 className="page-title mb-1">Instant Payments</h2>
+                <p className="text-muted small mb-0">
+                    Pay any registered user instantly using their 10-digit mobile number.
+                </p>
             </div>
 
             {/* Success Receipt Banner */}
