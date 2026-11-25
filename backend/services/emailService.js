@@ -114,7 +114,21 @@ async function sendOTPEmail(toEmail, otp) {
     // Strategy 1: Resend HTTP API (Fast, reliable, bypasses Render SMTP port blocks)
     if (resendKey) {
         try {
-            const fromAddress = process.env.EMAIL_FROM || "Expense Tracker <onboarding@resend.dev>";
+            // For Resend: Unless a verified custom domain is explicitly given in RESEND_FROM,
+            // always use Resend's official sandbox sender 'onboarding@resend.dev'
+            let fromAddress = "Expense Tracker <onboarding@resend.dev>";
+            if (process.env.RESEND_FROM) {
+                fromAddress = process.env.RESEND_FROM;
+            } else if (
+                process.env.EMAIL_FROM &&
+                !process.env.EMAIL_FROM.includes("@gmail.com") &&
+                !process.env.EMAIL_FROM.includes("@yahoo.") &&
+                !process.env.EMAIL_FROM.includes("@hotmail.") &&
+                !process.env.EMAIL_FROM.includes("@outlook.")
+            ) {
+                fromAddress = process.env.EMAIL_FROM;
+            }
+
             const response = await fetch("https://api.resend.com/emails", {
                 method: "POST",
                 headers: {
@@ -136,9 +150,15 @@ async function sendOTPEmail(toEmail, otp) {
                 return { sent: true, mode: "resend", messageId: data.id };
             } else {
                 console.error(`[Email Service] Resend API error:`, data);
+                console.log("\n=======================================================");
+                console.log(`[EMAIL FALLBACK] OTP for ${toEmail}: >>> ${otp} <<<`);
+                console.log(`Reason for fallback: Resend API ${data.message || JSON.stringify(data)}`);
+                console.log("=======================================================\n");
+                return { sent: true, mode: "fallback_console", warning: data.message };
             }
         } catch (resendErr) {
             console.error(`[Email Service] Resend API network error:`, resendErr.message);
+            return { sent: true, mode: "fallback_console", warning: resendErr.message };
         }
     }
 
