@@ -7,7 +7,6 @@ import {
     validateEmail,
     validateMobile,
     validatePassword,
-    validateConfirmPassword,
     getPasswordStrength,
     validatePaymentPin,
     validateConfirmPin
@@ -23,7 +22,6 @@ function Register() {
         email: "",
         phone: "",
         password: "",
-        confirmPassword: "",
         pin: "",
         confirmPin: ""
     });
@@ -33,7 +31,6 @@ function Register() {
         email: false,
         phone: false,
         password: false,
-        confirmPassword: false,
         pin: false,
         confirmPin: false
     });
@@ -43,7 +40,6 @@ function Register() {
         email: "",
         phone: "",
         password: "",
-        confirmPassword: "",
         pin: "",
         confirmPin: ""
     });
@@ -51,7 +47,6 @@ function Register() {
     const [generalError, setGeneralError] = useState("");
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [showPin, setShowPin] = useState(false);
     const [showConfirmPin, setShowConfirmPin] = useState(false);
 
@@ -84,11 +79,6 @@ function Register() {
             }
             case "password": {
                 const res = validatePassword(value);
-                if (!res.valid) error = res.error;
-                break;
-            }
-            case "confirmPassword": {
-                const res = validateConfirmPassword(allFormValues.password, value);
                 if (!res.valid) error = res.error;
                 break;
             }
@@ -125,11 +115,6 @@ function Register() {
             validateField(field, value, nextForm);
         }
 
-        // If modifying password and confirmPassword was touched, recheck confirmPassword
-        if (field === "password" && touched.confirmPassword) {
-            validateField("confirmPassword", form.confirmPassword, nextForm);
-        }
-
         // If modifying pin and confirmPin was touched, recheck confirmPin
         if (field === "pin" && touched.confirmPin) {
             validateField("confirmPin", form.confirmPin, nextForm);
@@ -151,7 +136,6 @@ function Register() {
             email: true,
             phone: true,
             password: true,
-            confirmPassword: true,
             pin: true,
             confirmPin: true
         };
@@ -161,11 +145,10 @@ function Register() {
         const emailErr = validateField("email", form.email, form);
         const phoneErr = validateField("phone", form.phone, form);
         const passErr = validateField("password", form.password, form);
-        const confirmPassErr = validateField("confirmPassword", form.confirmPassword, form);
         const pinErr = validateField("pin", form.pin, form);
         const confirmPinErr = validateField("confirmPin", form.confirmPin, form);
 
-        if (nameErr || emailErr || phoneErr || passErr || confirmPassErr || pinErr || confirmPinErr) {
+        if (nameErr || emailErr || phoneErr || passErr || pinErr || confirmPinErr) {
             showToast("Please correct the errors in the form before submitting.", "error");
             return;
         }
@@ -424,55 +407,7 @@ function Register() {
                         )}
                     </div>
 
-                    {/* 5. Confirm Password Input */}
-                    <div className="mb-3">
-                        <label className="form-label small fw-bold text-muted mb-1">Confirm Password</label>
-                        <div
-                            className={`input-group input-group-auth ${
-                                isInvalid("confirmPassword")
-                                    ? "is-invalid"
-                                    : isValid("confirmPassword")
-                                    ? "is-valid"
-                                    : ""
-                            }`}
-                        >
-                            <span className="input-group-text auth-input-icon">
-                                <i className="bi bi-shield-check"></i>
-                            </span>
-                            <input
-                                type={showConfirmPassword ? "text" : "password"}
-                                className="form-control auth-input-field"
-                                placeholder="Confirm your password"
-                                required
-                                value={form.confirmPassword}
-                                onChange={(e) => handleChange("confirmPassword", e.target.value)}
-                                onBlur={() => handleBlur("confirmPassword")}
-                                disabled={loading}
-                            />
-                            {isValid("confirmPassword") && (
-                                <span className="auth-valid-icon" title="Passwords match">
-                                    <i className="bi bi-check-circle-fill"></i>
-                                </span>
-                            )}
-                            <button
-                                type="button"
-                                className="btn auth-input-toggle"
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                title={showConfirmPassword ? "Hide password" : "Show password"}
-                                tabIndex="-1"
-                            >
-                                <i className={`bi ${showConfirmPassword ? "bi-eye-slash" : "bi-eye"}`}></i>
-                            </button>
-                        </div>
-                        {isInvalid("confirmPassword") && (
-                            <div className="auth-field-error">
-                                <i className="bi bi-exclamation-circle-fill"></i>
-                                <span>{errors.confirmPassword}</span>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* 6. Four-Digit Security PIN */}
+                    {/* 5. Four-Digit Security PIN */}
                     <div className="mb-3">
                         <div className="d-flex justify-content-between align-items-center mb-1">
                             <label className="form-label small fw-bold text-muted mb-0">
