@@ -127,12 +127,10 @@ function Login() {
                 )}
 
                 {/* Login Form */}
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} noValidate>
                     {/* Email Input */}
                     <div className="mb-3">
-                        <label className="form-label small fw-bold text-muted mb-1">
-                            Email <span className="text-danger">*</span>
-                        </label>
+                        <label className="form-label small fw-bold text-muted mb-1">Email</label>
                         <div
                             className={`input-group input-group-auth ${
                                 isEmailInvalid ? "is-invalid" : isEmailValid ? "is-valid" : ""
@@ -168,9 +166,7 @@ function Login() {
                     {/* Password Input with Visibility Toggle */}
                     <div className="mb-3">
                         <div className="d-flex justify-content-between align-items-center mb-1">
-                            <label className="form-label small fw-bold text-muted mb-0">
-                                Password <span className="text-danger">*</span>
-                            </label>
+                            <label className="form-label small fw-bold text-muted mb-0">Password</label>
                             <span
                                 className="small text-primary fw-semibold"
                                 style={{ cursor: "pointer", fontSize: "0.82rem" }}
