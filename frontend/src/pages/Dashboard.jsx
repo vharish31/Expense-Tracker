@@ -350,6 +350,7 @@ function Dashboard() {
                 transaction_date: new Date().toISOString().slice(0, 10)
             });
             await loadData();
+            window.dispatchEvent(new Event("fintrack:transaction_created"));
         } catch (err) {
             alert(err.response?.data?.message || "Failed to record transaction");
         }

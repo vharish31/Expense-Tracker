@@ -97,6 +97,33 @@ exports.addTransaction = async (req, res) => {
             );
         }
 
+        // Create in-app notification for this transaction
+        try {
+            const notifTitle = type === "Income" ? "Funds Credited" : "Funds Debited";
+            const formattedAmt = numAmount.toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            const notifMsg = type === "Income"
+                ? `₹${formattedAmt} credited to your account for "${title}".`
+                : `₹${formattedAmt} debited from your account for "${title}".`;
+
+            await db.query(
+                `INSERT INTO notifications (user_id, title, message, type, amount, ref_no)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [
+                    req.user.id,
+                    notifTitle,
+                    notifMsg,
+                    type === "Income" ? "credit" : "debit",
+                    numAmount,
+                    transaction.ref_no || null
+                ]
+            );
+        } catch (notifErr) {
+            console.error("Failed to create notification:", notifErr);
+        }
+
         res.status(201).json({
             message: "Transaction added successfully",
             transaction

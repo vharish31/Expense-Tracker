@@ -208,6 +208,7 @@ function Payments() {
 
             // Reload cards and history to reflect updated balance
             await loadPaymentData();
+            window.dispatchEvent(new Event("fintrack:transaction_created"));
         } catch (err) {
             const msg = err.response?.data?.message || "Payment transfer failed. Please try again.";
             setPinError(msg);

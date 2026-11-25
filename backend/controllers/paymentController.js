@@ -195,6 +195,33 @@ exports.transferFunds = async (req, res) => {
             [recipient.id, recipientTitle, numAmount, recipientDesc, todayDate, utrNumber, recipientCardId]
         );
 
+        // 6. Record In-App Notifications for both Sender & Recipient
+        const formattedAmt = numAmount.toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        await client.query(
+            `INSERT INTO notifications (user_id, title, message, type, amount, ref_no)
+             VALUES ($1, 'Payment Sent', $2, 'debit', $3, $4)`,
+            [
+                req.user.id,
+                `Transferred ₹${formattedAmt} to ${recipient.name} (+91 ${recipient.phone}) via UPI.`,
+                numAmount,
+                utrNumber
+            ]
+        );
+
+        await client.query(
+            `INSERT INTO notifications (user_id, title, message, type, amount, ref_no)
+             VALUES ($1, 'Payment Received', $2, 'credit', $3, $4)`,
+            [
+                recipient.id,
+                `Received ₹${formattedAmt} from ${sender.name} (+91 ${sender.phone || ""}) via UPI.`,
+                numAmount,
+                utrNumber
+            ]
+        );
+
         // COMMIT ATOMIC TRANSACTION
         await client.query("COMMIT");
 

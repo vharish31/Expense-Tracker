@@ -15,6 +15,7 @@ app.use("/api/categories", require("./routes/categoryRoutes"));
 app.use("/api/budgets", require("./routes/budgetRoutes"));
 app.use("/api/cards", require("./routes/cardRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
+app.use("/api/notifications", require("./routes/notificationRoutes"));
 
 app.get("/", (req, res) => {
     res.send("Expense Tracker API is running!");

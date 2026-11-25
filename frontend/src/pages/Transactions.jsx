@@ -198,6 +198,7 @@ function Transactions() {
             await API.post("/transactions", formData);
             resetForm();
             fetchData();
+            window.dispatchEvent(new Event("fintrack:transaction_created"));
         } catch (error) {
             console.error("Error saving transaction:", error);
             alert(error.response?.data?.message || "Failed to save transaction.");
