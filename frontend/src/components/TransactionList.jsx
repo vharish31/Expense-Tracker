@@ -235,6 +235,9 @@ function TransactionList({ transactions, currentPage = 1, itemsPerPage = 10 }) {
                                         <div className="text-balance-inr">
                                             {formatINR(tx.runningBalance)}
                                         </div>
+                                        <small className="text-muted" style={{ fontSize: "0.68rem" }}>
+                                            {tx.runningBalance >= 0 ? "Cr" : "Dr"}
+                                        </small>
                                     </div>
                                 </div>
                             </div>

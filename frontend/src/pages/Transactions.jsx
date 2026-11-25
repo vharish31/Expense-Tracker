@@ -51,9 +51,16 @@ function Transactions() {
         fetchData();
     }, []);
 
-    // Compute authentic chronological running balance for every transaction
+    // Total Card Balance from User Vaults
+    const totalCardBalance = useMemo(() => {
+        return cards.reduce((sum, c) => sum + (Number(c.balance) || 0), 0);
+    }, [cards]);
+
+    // Compute authentic chronological running balance for every transaction anchored to Total Balance
     const transactionsWithRunningBalance = useMemo(() => {
-        // Sort from oldest to newest to compute running balance accurately
+        if (!transactions || transactions.length === 0) return [];
+
+        // Sort from oldest to newest to establish exact chronological timeline
         const sortedChronological = [...transactions].sort((a, b) => {
             const d1 = new Date(a.transaction_date).getTime();
             const d2 = new Date(b.transaction_date).getTime();
@@ -61,29 +68,45 @@ function Transactions() {
             return a.id - b.id;
         });
 
-        let cumulative = 0;
-        const balanceMap = new Map();
-
+        // Compute total income and total expenses across transactions
+        let totalIncome = 0;
+        let totalExpense = 0;
         sortedChronological.forEach((t) => {
             const amt = Number(t.amount) || 0;
-            if (t.type === "Income") {
-                cumulative += amt;
-            } else {
-                cumulative -= amt;
-            }
-            balanceMap.set(t.id, cumulative);
+            if (t.type === "Income") totalIncome += amt;
+            else totalExpense += amt;
         });
+
+        // Current total balance is based on user's card vaults, matching Dashboard
+        const currentTotal = cards.length > 0 ? totalCardBalance : (totalIncome - totalExpense);
+
+        // Calculate running balance anchored to current total balance
+        const balanceMap = new Map();
+        let running = currentTotal;
+
+        // Traverse in reverse chronological order (newest to oldest)
+        for (let i = sortedChronological.length - 1; i >= 0; i--) {
+            const t = sortedChronological[i];
+            const amt = Number(t.amount) || 0;
+
+            // Running balance after this transaction was executed
+            balanceMap.set(t.id, running);
+
+            // Roll back to find the running balance before this transaction took place:
+            // Income increased balance, so before it the balance was (running - amt)
+            // Expense decreased balance, so before it the balance was (running + amt)
+            if (t.type === "Income") {
+                running -= amt;
+            } else {
+                running += amt;
+            }
+        }
 
         return transactions.map((t) => ({
             ...t,
             runningBalance: balanceMap.get(t.id) ?? 0
         }));
-    }, [transactions]);
-
-    // Total Card Balance from User Vaults
-    const totalCardBalance = useMemo(() => {
-        return cards.reduce((sum, c) => sum + (Number(c.balance) || 0), 0);
-    }, [cards]);
+    }, [transactions, cards, totalCardBalance]);
 
     // Statement totals - Net balance reflects card balances automatically
     const { totalCredits, totalDebits, netBalance } = useMemo(() => {
