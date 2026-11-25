@@ -102,9 +102,47 @@ function generateOTPEmailHtml(otp, expiryMinutes = 5) {
 }
 
 /**
- * Send 6-digit OTP to the user's email address with hard timeout safeguard
+ * Send 6-digit OTP to the user's email address with hard timeout safeguard.
+ * Supports:
+ * 1. Resend HTTP API (if RESEND_API_KEY is provided - recommended on Render because port 443 is never blocked)
+ * 2. Nodemailer SMTP (Gmail, custom SMTP)
+ * 3. Safe console fallback if network/SMTP connection fails
  */
 async function sendOTPEmail(toEmail, otp) {
+    const resendKey = process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.trim() : null;
+
+    // Strategy 1: Resend HTTP API (Fast, reliable, bypasses Render SMTP port blocks)
+    if (resendKey) {
+        try {
+            const fromAddress = process.env.EMAIL_FROM || "Expense Tracker <onboarding@resend.dev>";
+            const response = await fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${resendKey}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    from: fromAddress,
+                    to: [toEmail],
+                    subject: `${otp} is your Expense Tracker verification code`,
+                    text: `Your Expense Tracker verification code is: ${otp}\n\nThis code will expire in 5 minutes. Do not share this code with anyone.`,
+                    html: generateOTPEmailHtml(otp, 5)
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok && data.id) {
+                console.log(`[Email Service] Verification OTP email sent via Resend to ${toEmail} (Id: ${data.id})`);
+                return { sent: true, mode: "resend", messageId: data.id };
+            } else {
+                console.error(`[Email Service] Resend API error:`, data);
+            }
+        } catch (resendErr) {
+            console.error(`[Email Service] Resend API network error:`, resendErr.message);
+        }
+    }
+
+    // Strategy 2: Nodemailer SMTP
     const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER || '"Expense Tracker" <no-reply@expensetracker.com>';
     const mailOptions = {
         from: fromAddress,
