@@ -69,13 +69,16 @@ async function generateAndSendOTP(email) {
     );
 
     // 7. Dispatch the email via Nodemailer
-    await sendOTPEmail(cleanEmail, rawOtp);
+    const emailResult = await sendOTPEmail(cleanEmail, rawOtp);
 
     return {
         success: true,
         status: 200,
         email: cleanEmail,
-        message: "Verification code sent successfully.",
+        message: emailResult.mode === "smtp"
+            ? "Verification code sent successfully to your email."
+            : "Verification code generated. (Check server logs if SMTP is unavailable)",
+        deliveryMode: emailResult.mode,
         cooldownSeconds: RESEND_COOLDOWN_SECONDS,
         expiryMinutes: OTP_EXPIRY_MINUTES
     };

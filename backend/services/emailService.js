@@ -2,25 +2,47 @@ const nodemailer = require("nodemailer");
 
 /**
  * Configure Nodemailer Transporter using environment variables.
- * Safe fallback: If SMTP is unconfigured, logs the OTP clearly to console.
+ * Safe fallback: If SMTP is unconfigured or fails, logs the OTP clearly to console.
  */
 let transporter = null;
 
 function getTransporter() {
     if (transporter) return transporter;
 
-    const host = process.env.EMAIL_HOST || "smtp.gmail.com";
-    const port = parseInt(process.env.EMAIL_PORT, 10) || 587;
-    const secure = process.env.EMAIL_SECURE === "true" || port === 465;
-    const user = process.env.EMAIL_USER;
-    const pass = process.env.EMAIL_PASSWORD;
+    const user = process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : "";
+    const rawPass = process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD.trim() : "";
+    // Google App Passwords often have spaces like "abcd efgh ijkl mnop"
+    const pass = rawPass.replace(/\s+/g, "");
 
-    if (user && pass) {
+    if (!user || !pass) {
+        return null;
+    }
+
+    const host = (process.env.EMAIL_HOST || "smtp.gmail.com").trim().toLowerCase();
+    const port = parseInt(process.env.EMAIL_PORT, 10) || (host.includes("gmail") ? 465 : 587);
+
+    // If host is Gmail, use nodemailer's built-in 'gmail' service to avoid port/TLS misconfigurations
+    if (host.includes("gmail")) {
+        transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: { user, pass },
+            connectionTimeout: 8000, // 8s connection timeout
+            greetingTimeout: 8000,
+            socketTimeout: 10000
+        });
+    } else {
+        const secure = port === 465 || process.env.EMAIL_SECURE === "true";
         transporter = nodemailer.createTransport({
             host,
             port,
             secure,
-            auth: { user, pass }
+            auth: { user, pass },
+            connectionTimeout: 8000,
+            greetingTimeout: 8000,
+            socketTimeout: 10000,
+            tls: {
+                rejectUnauthorized: false
+            }
         });
     }
 
@@ -80,10 +102,10 @@ function generateOTPEmailHtml(otp, expiryMinutes = 5) {
 }
 
 /**
- * Send 6-digit OTP to the user's email address
+ * Send 6-digit OTP to the user's email address with hard timeout safeguard
  */
 async function sendOTPEmail(toEmail, otp) {
-    const fromAddress = process.env.EMAIL_FROM || '"Expense Tracker" <no-reply@expensetracker.com>';
+    const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER || '"Expense Tracker" <no-reply@expensetracker.com>';
     const mailOptions = {
         from: fromAddress,
         to: toEmail,
@@ -96,16 +118,23 @@ async function sendOTPEmail(toEmail, otp) {
 
     if (client) {
         try {
-            const info = await client.sendMail(mailOptions);
+            // Strict 9-second timeout safeguard so the HTTP request never hangs
+            const sendPromise = client.sendMail(mailOptions);
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("SMTP connection timed out after 9 seconds")), 9000)
+            );
+
+            const info = await Promise.race([sendPromise, timeoutPromise]);
             console.log(`[Email Service] Verification OTP email sent to ${toEmail} (MessageId: ${info.messageId})`);
             return { sent: true, mode: "smtp", messageId: info.messageId };
         } catch (error) {
             console.error(`[Email Service] Failed to send email via SMTP:`, error.message);
-            // Log fallback to console so testing is not blocked
+            // Log fallback to console so user can check Render logs and testing is never blocked
             console.log("\n=======================================================");
             console.log(`[EMAIL FALLBACK] OTP for ${toEmail}: >>> ${otp} <<<`);
+            console.log(`Reason for fallback: ${error.message}`);
             console.log("=======================================================\n");
-            return { sent: true, mode: "fallback_console", warning: "SMTP send failed, logged to console" };
+            return { sent: true, mode: "fallback_console", warning: error.message };
         }
     } else {
         // SMTP not configured - log clearly in dev console
