@@ -1,0 +1,2012 @@
+/* ==========================================================================
+   OFFICIAL ENTERPRISE FINTECH DESIGN SYSTEM (INR / RUPEE EDITION)
+   Theme: Pure Crisp White / Ultra-Modern Light Theme
+   Responsive Architecture & Closable Modern Sidebar
+   ========================================================================== */
+
+:root,
+[data-bs-theme="light"],
+body.light-mode {
+  --bg-app: #F5F7FB;
+  --bg-surface: #FFFFFF;
+  --bg-surface-elevated: #FFFFFF;
+  --bg-surface-subtle: #F8FAFC;
+  --bg-surface-hover: #F1F5F9;
+
+  --border-app: #E5E9F2;
+  --border-subtle: #F1F4F9;
+  --border-focus: #6366F1;
+
+  --text-main: #1E293B;
+  --text-secondary: #475569;
+  --text-muted: #8E9BAE;
+  --text-subtle: #94A3B8;
+
+  --color-primary: #6366F1;
+  --color-primary-hover: #4F46E5;
+  --color-primary-subtle: #EEF2FF;
+  --color-primary-border: #C7D2FE;
+
+  --color-success: #10B981;
+  --color-success-subtle: #ECFDF5;
+  --color-success-border: #A7F3D0;
+
+  --color-danger: #EF4444;
+  --color-danger-subtle: #FEF2F2;
+  --color-danger-border: #FECACA;
+
+  --color-warning: #F59E0B;
+  --color-warning-subtle: #FFFBEB;
+  --color-warning-border: #FDE68A;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 4px 20px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02);
+  --shadow-md: 0 8px 30px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.08);
+
+  --sidebar-width: 260px;
+  --sidebar-bg: #FFFFFF;
+  --sidebar-text: #64748B;
+  --sidebar-active-bg: #EEF2FF;
+  --sidebar-active-text: #6366F1;
+  --sidebar-border: #EAEFF5;
+
+  --radius-card: 20px;
+  --radius-pill: 9999px;
+  --radius-sm: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ==========================================================================
+   APP SHELL LAYOUT: SIDEBAR + MAIN CONTENT
+   ========================================================================== */
+
+.official-app-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
+/* Closable Modern Left Sidebar */
+.official-sidebar {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1045;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.02);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Desktop open/closed states */
+.official-sidebar.open {
+  transform: translateX(0);
+}
+
+.official-sidebar.closed {
+  transform: translateX(-100%);
+}
+
+.sidebar-header {
+  padding: 22px 18px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.sidebar-brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.28);
+  flex-shrink: 0;
+}
+
+.sidebar-brand-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.sidebar-brand-subtitle {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Dedicated Close Button Inside Sidebar Header */
+.sidebar-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--border-app);
+  background-color: var(--bg-surface-subtle);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-close-btn:hover {
+  background-color: #FEE2E2;
+  color: #DC2626;
+  border-color: #FECACA;
+  transform: scale(1.06);
+}
+
+.sidebar-nav-container {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 16px;
+  border-radius: 14px;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.sidebar-nav-item:hover {
+  background-color: var(--bg-surface-subtle);
+  color: var(--color-primary);
+}
+
+.sidebar-nav-item.active {
+  background-color: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+  font-weight: 700;
+}
+
+.sidebar-nav-item-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sidebar-nav-item-left i {
+  font-size: 1.15rem;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-nav-item.active .sidebar-nav-item-left i {
+  color: var(--color-primary);
+  transform: scale(1.08);
+}
+
+.sidebar-nav-indicator-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #EF4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+}
+
+.sidebar-footer-profile {
+  padding: 16px 14px;
+  border-top: 1px solid var(--sidebar-border);
+}
+
+.sidebar-profile-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background-color: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+}
+
+.sidebar-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.sidebar-logout-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-logout-btn:hover {
+  background-color: #FEE2E2;
+  color: #DC2626;
+}
+
+/* ==========================================================================
+   MAIN CONTENT AREA & RESPONSIVE VIEWPORT
+   ========================================================================== */
+
+.official-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (min-width: 992px) {
+  .official-main-content.with-sidebar {
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+  }
+
+  .official-main-content.full-width {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .official-main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+}
+
+.app-content-viewport {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+.page-container {
+  padding: 28px 32px;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 16px 14px;
+  }
+}
+
+/* ==========================================================================
+   TOPBAR / HEADER
+   ========================================================================== */
+
+.official-topbar {
+  height: 74px;
+  background-color: #FFFFFF;
+  border-bottom: 1px solid var(--border-app);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
+
+@media (max-width: 768px) {
+  .official-topbar {
+    padding: 0 14px;
+    height: 66px;
+  }
+}
+
+/* Universal Sidebar Toggle Button */
+.topbar-toggle-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--border-app);
+  background-color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.topbar-toggle-btn:hover {
+  background-color: var(--bg-surface-subtle);
+  color: var(--color-primary);
+  border-color: var(--color-primary-border);
+}
+
+/* Topbar Search Pill */
+.topbar-search-box {
+  position: relative;
+  width: 320px;
+  max-width: 100%;
+}
+
+@media (max-width: 576px) {
+  .topbar-search-box {
+    width: 150px;
+  }
+}
+
+.topbar-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.topbar-search-input {
+  width: 100%;
+  height: 40px;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: var(--radius-pill);
+  padding: 0 14px 0 38px;
+  font-size: 0.85rem;
+  color: var(--text-main);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.topbar-search-input:focus {
+  background-color: #FFFFFF;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.topbar-search-input::placeholder {
+  color: #94A3B8;
+}
+
+/* Topbar Right Utilities */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-date-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.topbar-date-pill i {
+  color: var(--text-muted);
+}
+
+.topbar-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #E2E8F0;
+  background-color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.topbar-icon-btn:hover {
+  background-color: #F8FAFC;
+  color: var(--color-primary);
+}
+
+.topbar-notification-dot {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #EF4444;
+  border: 2px solid #FFFFFF;
+}
+
+.topbar-avatar-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   CARDS & CONTAINERS (Premium Rounded White Aesthetic)
+   ========================================================================== */
+
+.official-card {
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-app);
+  box-shadow: var(--shadow-card);
+  padding: 22px;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.official-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 576px) {
+  .official-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+}
+
+.card-header-clean {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.card-title-clean {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.card-link-clean {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.2s;
+}
+
+.card-link-clean:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   HERO ROW: TOTAL BALANCE + CARDS + WALLET PROMO
+   ========================================================================== */
+
+/* Total Balance Box */
+.hero-balance-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+}
+
+.hero-balance-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.hero-balance-amount {
+  font-size: clamp(1.85rem, 3.5vw, 2.5rem);
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 14px;
+}
+
+.hero-balance-substats {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.hero-stat-pill {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-stat-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.hero-stat-indicator.income {
+  color: #10B981;
+}
+
+.hero-stat-indicator.expense {
+  color: #EF4444;
+}
+
+.hero-stat-subtext {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Bank Gradient Cards */
+.bank-cards-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: visible;
+  padding: 8px 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.bank-cards-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.bank-card {
+  width: 210px;
+  min-width: 210px;
+  height: 135px;
+  border-radius: 16px;
+  padding: 14px 16px;
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  flex-shrink: 0;
+}
+
+.bank-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.bank-card-blue {
+  background: linear-gradient(135deg, #4338CA 0%, #3B82F6 50%, #2563EB 100%);
+}
+
+.bank-card-green {
+  background: linear-gradient(135deg, #059669 0%, #10B981 50%, #34D399 100%);
+}
+
+.bank-card-purple {
+  background: linear-gradient(135deg, #6D28D9 0%, #7C3AED 50%, #6366F1 100%);
+}
+
+.bank-card-coral {
+  background: linear-gradient(135deg, #BE123C 0%, #E11D48 50%, #FB7185 100%);
+}
+
+.bank-card::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -30%;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+}
+
+.bank-card-amount {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.bank-card-chip {
+  font-size: 1.1rem;
+  opacity: 0.85;
+}
+
+.bank-card-number {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  opacity: 0.9;
+  font-weight: 600;
+}
+
+.bank-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+.bank-card-name {
+  font-weight: 700;
+  text-transform: uppercase;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bank-cards-nav-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-app);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.bank-cards-nav-btn:hover {
+  background-color: var(--bg-surface-subtle);
+  color: var(--color-primary);
+}
+
+/* Wallet Promo Card */
+.wallet-promo-card {
+  background: linear-gradient(180deg, #F9FAFD 0%, #EEF2FF 100%);
+  border-radius: var(--radius-card);
+  border: 1px solid #E0E7FF;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.wallet-illustration-box {
+  width: 110px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.wallet-art-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 6px 14px rgba(99, 102, 241, 0.16));
+}
+
+.btn-add-funds {
+  background: linear-gradient(135deg, #818CF8 0%, #6366F1 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 9px 20px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  width: 100%;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.28);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-add-funds:hover {
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.38);
+}
+
+/* ==========================================================================
+   LOWER SECTION: ACTIVITIES (SPLINE) + TRANSACTIONS + CATEGORIES
+   ========================================================================== */
+
+.timeframe-select-pill {
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-app);
+  background-color: #FFFFFF;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  outline: none;
+  cursor: pointer;
+}
+
+/* Transaction List Items with Status Badges */
+.tx-list-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tx-item-modern {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.tx-item-modern:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.tx-item-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.tx-avatar-orange {
+  background-color: #FFF7ED;
+  color: #F97316;
+}
+
+.tx-avatar-purple {
+  background-color: #F5F3FF;
+  color: #8B5CF6;
+}
+
+.tx-avatar-green {
+  background-color: #ECFDF5;
+  color: #10B981;
+}
+
+.tx-avatar-red {
+  background-color: #FEF2F2;
+  color: #EF4444;
+}
+
+.tx-avatar-blue {
+  background-color: #EFF6FF;
+  color: #3B82F6;
+}
+
+.tx-avatar-teal {
+  background-color: #F0FDFA;
+  color: #0D9488;
+}
+
+.tx-item-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  margin-left: 12px;
+  margin-right: 10px;
+  overflow: hidden;
+}
+
+.tx-item-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tx-item-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Status Pill Badges */
+.tx-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tx-status-pill.sent {
+  background-color: #FEE2E2;
+  color: #DC2626;
+}
+
+.tx-status-pill.received {
+  background-color: #D1FAE5;
+  color: #059669;
+}
+
+.tx-status-pill.pending {
+  background-color: #FEF3C7;
+  color: #D97706;
+}
+
+/* Category Modern List */
+.category-modern-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.category-modern-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.category-icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.cat-icon-bills {
+  background-color: #10B981;
+  color: #FFFFFF;
+}
+
+.cat-icon-entertainment {
+  background-color: #F97316;
+  color: #FFFFFF;
+}
+
+.cat-icon-shopping {
+  background-color: #8B5CF6;
+  color: #FFFFFF;
+}
+
+.cat-icon-utility {
+  background-color: #EC4899;
+  color: #FFFFFF;
+}
+
+.cat-icon-food {
+  background-color: #3B82F6;
+  color: #FFFFFF;
+}
+
+.cat-icon-travel {
+  background-color: #EAB308;
+  color: #FFFFFF;
+}
+
+.cat-icon-general {
+  background-color: #64748B;
+  color: #FFFFFF;
+}
+
+.category-meta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  margin-left: 12px;
+}
+
+.category-name-text {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.category-amount-text {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.btn-icon-add {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--border-app);
+  background-color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-icon-add:hover {
+  background-color: var(--bg-surface-subtle);
+  color: var(--color-primary);
+  border-color: var(--color-primary-border);
+}
+
+/* ==========================================================================
+   BANK PASSBOOK STATEMENT LAYOUT (Requirement 8)
+   ========================================================================== */
+
+.bank-statement-header {
+  background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+  color: #FFFFFF;
+  border-radius: var(--radius-card);
+  padding: 22px 26px;
+  margin-bottom: 22px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+}
+
+@media (max-width: 576px) {
+  .bank-statement-header {
+    padding: 16px;
+    border-radius: 16px;
+  }
+}
+
+.bank-statement-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.bank-passbook-table-wrap {
+  background-color: #FFFFFF;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-app);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.table-passbook {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.9rem;
+}
+
+.table-passbook thead {
+  background-color: #F8FAFC;
+  border-bottom: 2px solid var(--border-app);
+}
+
+.table-passbook th {
+  padding: 14px 18px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748B;
+  border-bottom: 1px solid var(--border-app);
+}
+
+.table-passbook td {
+  padding: 14px 18px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-main);
+}
+
+.table-passbook tr:last-child td {
+  border-bottom: none;
+}
+
+.table-passbook tbody tr:hover td {
+  background-color: #F8FAFC;
+}
+
+/* Strict requirement 8: Debit in red, Credit in green */
+.text-debit-red {
+  color: #DC2626 !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem;
+}
+
+.text-credit-green {
+  color: #059669 !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem;
+}
+
+.text-balance-inr {
+  font-weight: 800;
+  color: #1E293B;
+  font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   BUTTONS & FORM CONTROLS
+   ========================================================================== */
+
+.btn-official-primary {
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 8px 18px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-official-primary:hover {
+  background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+  color: #FFFFFF;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-official-secondary {
+  background-color: #FFFFFF;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-app);
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-official-secondary:hover {
+  background-color: var(--bg-surface-subtle);
+  color: var(--color-primary);
+  border-color: var(--color-primary-border);
+}
+
+.form-control-official,
+.form-select-official {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-app);
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-size: 0.88rem;
+  color: var(--text-main);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.form-control-official:focus,
+.form-select-official:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVE OVERLAYS
+   ========================================================================== */
+
+@media (max-width: 991.98px) {
+  .official-sidebar {
+    width: 280px;
+    max-width: 85vw;
+    z-index: 1050;
+    box-shadow: 4px 0 25px rgba(15, 23, 42, 0.18);
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(4px);
+    z-index: 1040;
+    animation: fadeIn 0.2s ease;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Print Passbook Styling */
+@media print {
+
+  .official-sidebar,
+  .official-topbar,
+  .btn-official-primary,
+  .btn-official-secondary,
+  .topbar-actions,
+  .sidebar-backdrop,
+  .no-print {
+    display: none !important;
+  }
+
+  .official-main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .page-container {
+    padding: 0 !important;
+  }
+
+  body {
+    background-color: #FFFFFF !important;
+  }
+
+  .official-card,
+  .bank-passbook-table-wrap {
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
+
+
+/* ==========================================================================
+   PURE CENTERED AUTHENTICATION (FOCUSED LOGIN & REGISTER ONLY)
+   ========================================================================== */
+
+.auth-pure-canvas {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #F8FAFC;
+  padding: 32px 16px;
+}
+
+.auth-pure-card {
+  width: 100%;
+  max-width: 440px;
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 24px;
+  padding: 40px 36px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02);
+  transition: box-shadow 0.2s ease;
+}
+
+@media (max-width: 576px) {
+  .auth-pure-canvas {
+    padding: 20px 12px;
+  }
+
+  .auth-pure-card {
+    padding: 28px 20px;
+    border-radius: 20px;
+  }
+}
+
+.auth-brand-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.28);
+}
+
+.auth-pure-title {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.auth-pure-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-bottom: 0;
+}
+
+
+/* ==========================================================================
+   ULTRA-MODERN FOCUSED AUTH STYLING (LOGIN & REGISTER)
+   ========================================================================== */
+
+.auth-pure-canvas {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 10%, rgba(99, 102, 241, 0.08) 0%, rgba(248, 250, 252, 1) 70%);
+  padding: 32px 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-pure-canvas::before {
+  content: "";
+  position: absolute;
+  top: -140px;
+  right: -140px;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0) 70%);
+  pointer-events: none;
+}
+
+.auth-pure-canvas::after {
+  content: "";
+  position: absolute;
+  bottom: -140px;
+  left: -140px;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.06) 0%, rgba(16, 185, 129, 0) 70%);
+  pointer-events: none;
+}
+
+.auth-pure-card {
+  width: 100%;
+  max-width: 440px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 24px;
+  padding: 42px 36px;
+  box-shadow: 0 20px 45px -12px rgba(99, 102, 241, 0.09), 0 2px 6px rgba(15, 23, 42, 0.03);
+  position: relative;
+  z-index: 2;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.auth-pure-card:hover {
+  box-shadow: 0 24px 50px -10px rgba(99, 102, 241, 0.12), 0 3px 8px rgba(15, 23, 42, 0.04);
+}
+
+@media (max-width: 576px) {
+  .auth-pure-canvas {
+    padding: 20px 14px;
+  }
+
+  .auth-pure-card {
+    padding: 30px 22px;
+    border-radius: 20px;
+  }
+}
+
+.auth-brand-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.32);
+}
+
+.auth-pure-title {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.025em;
+  margin-bottom: 6px;
+}
+
+.auth-pure-subtitle {
+  font-size: 0.9rem;
+  color: #64748B;
+  margin-bottom: 0;
+  line-height: 1.45;
+}
+
+/* Modern Input Groups with Leading Icons */
+.input-with-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-icon-lead {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94A3B8;
+  font-size: 1.05rem;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.input-auth-control {
+  width: 100%;
+  height: 48px;
+  background-color: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 0 46px 0 46px;
+  font-size: 0.92rem;
+  color: #0F172A;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+}
+
+.input-auth-control:focus {
+  background-color: #FFFFFF;
+  border-color: #6366F1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+}
+
+.input-auth-control::placeholder {
+  color: #94A3B8;
+  font-size: 0.9rem;
+}
+
+/* Password Visibility Toggle */
+.input-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.18s ease;
+  z-index: 3;
+}
+
+.input-password-toggle:hover {
+  color: #4F46E5;
+  background-color: #EEF2FF;
+}
+
+/* Modern Primary Submit Button */
+.btn-auth-submit {
+  width: 100%;
+  height: 48px;
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 9999px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.32);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.btn-auth-submit:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(99, 102, 241, 0.42);
+}
+
+.btn-auth-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-auth-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Custom styled form checkbox */
+.auth-pure-card .form-check-input {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1.5px solid #CBD5E1;
+  cursor: pointer;
+}
+
+.auth-pure-card .form-check-input:checked {
+  background-color: #6366F1;
+  border-color: #6366F1;
+}
+
+.auth-pure-card .form-check-input:focus {
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+
+/* ==========================================================================
+   BULLETPROOF BOOTSTRAP-COMPATIBLE AUTH DESIGN (FOCUSED LOGIN & REGISTER)
+   ========================================================================== */
+
+.input-group-auth {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1.5px solid #E2E8F0;
+  background-color: #F8FAFC;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.input-group-auth:focus-within {
+  border-color: #6366F1;
+  background-color: #FFFFFF;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.14);
+}
+
+.auth-input-icon {
+  background-color: transparent !important;
+  border: none !important;
+  color: #94A3B8 !important;
+  font-size: 1.05rem !important;
+  padding-left: 16px !important;
+  padding-right: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.input-group-auth:focus-within .auth-input-icon {
+  color: #6366F1 !important;
+}
+
+.auth-input-field {
+  background-color: transparent !important;
+  border: none !important;
+  font-size: 0.92rem !important;
+  color: #0F172A !important;
+  height: 48px !important;
+  box-shadow: none !important;
+  padding-left: 8px !important;
+  padding-right: 14px !important;
+}
+
+.auth-input-field:focus {
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+.auth-input-field::placeholder {
+  color: #94A3B8 !important;
+  font-size: 0.9rem !important;
+}
+
+.auth-input-toggle {
+  background-color: transparent !important;
+  border: none !important;
+  color: #94A3B8 !important;
+  padding-right: 14px !important;
+  padding-left: 8px !important;
+  font-size: 1.1rem !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  transition: color 0.15s ease !important;
+}
+
+.auth-input-toggle:hover {
+  color: #4F46E5 !important;
+}
+
+.btn-auth-pill {
+  width: 100% !important;
+  height: 48px !important;
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.32) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-auth-pill:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 24px rgba(99, 102, 241, 0.42) !important;
+}
+
+.btn-auth-pill:active:not(:disabled) {
+  transform: translateY(0) !important;
+}
+
+.btn-auth-pill:disabled {
+  opacity: 0.7 !important;
+  cursor: not-allowed !important;
+}
+
+
+/* Multi-Card Vault Interactive Styles */
+.bank-card-delete-btn {
+  background: rgba(0, 0, 0, 0.22);
+  border: none;
+  color: #FFFFFF;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: all 0.2s ease;
+  z-index: 5;
+}
+
+.bank-card-delete-btn:hover {
+  background: #DC2626;
+  opacity: 1;
+  transform: scale(1.12);
+}
+
+.bank-card-empty {
+  width: 210px;
+  min-width: 210px;
+  height: 135px;
+  border-radius: 16px;
+  border: 2px dashed #CBD5E1;
+  background-color: #F8FAFC;
+  color: #64748B;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  padding: 14px;
+  flex-shrink: 0;
+}
+
+.bank-card-empty:hover {
+  border-color: #6366F1;
+  background-color: #EEF2FF;
+  color: #4F46E5;
+  transform: translateY(-2px);
+}
+
+
+/* Empty Vault Modern Card Box */
+.empty-vault-modern-box {
+  width: 100%;
+  height: 140px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #FAF5FF 0%, #F5F7FB 50%, #EEF2FF 100%);
+  border: 1.5px dashed #CBD5E1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.empty-vault-modern-box:hover {
+  border-color: #6366F1;
+  background: linear-gradient(135deg, #F5F3FF 0%, #EEF2FF 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12);
+}
+
+.empty-vault-icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+
+/* ==========================================================================
+   USER-SELECTED DASHED ADD VAULT CARD DESIGN (Matches media_1795545896736)
+   ========================================================================== */
+
+.bank-card-add-slot {
+  width: 210px;
+  min-width: 210px;
+  height: 135px;
+  border-radius: 16px;
+  border: 2px dashed #CBD5E1;
+  background-color: #F8FAFC;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.bank-card-add-slot:hover {
+  border-color: #2563EB;
+  background-color: #EFF6FF;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+}
+
+.bank-card-add-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #2563EB;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.bank-card-add-slot:hover .bank-card-add-circle {
+  transform: scale(1.1);
+  background: #1D4ED8;
+}
+
+.bank-card-add-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #334155;
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
+}
+
+.bank-card-add-slot:hover .bank-card-add-title {
+  color: #1D4ED8;
+}
+
+.bank-card-add-sub {
+  font-size: 0.78rem;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   OVERLAYED / STACKED CARDS & BIG POPUP MODAL (User Request)
+   ========================================================================== */
+
+.bank-cards-deck-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  width: 100%;
+  padding: 8px 4px;
+  overflow: visible;
+}
+
+.bank-cards-stacked-group {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.bank-card-stacked {
+  cursor: pointer;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s ease, z-index 0.2s ease;
+  position: relative;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  box-shadow: -8px 0 20px rgba(0, 0, 0, 0.12);
+}
+
+.bank-card-stacked:not(:first-child) {
+  margin-left: -120px;
+}
+
+.bank-card-stacked:hover {
+  transform: translateY(-14px) scale(1.04) !important;
+  z-index: 99 !important;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.24) !important;
+}
+
+/* Central Big Card Modal Popup */
+.card-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1080;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeInModal 0.22s ease-out;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomInCardPopup {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.card-detail-popup {
+  background: #FFFFFF;
+  border-radius: 24px;
+  padding: 28px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35);
+  animation: zoomInCardPopup 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+/* Big Display Card */
+.big-bank-card {
+  width: 100%;
+  height: 235px;
+  border-radius: 20px;
+  padding: 24px 26px;
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 22px;
+  transition: transform 0.3s ease;
+}
+
+.big-bank-card:hover {
+  transform: translateY(-2px);
+}
+
+.big-bank-card::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  right: -20%;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+}
+
+.big-bank-card-balance-label {
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  font-weight: 600;
+}
+
+.big-bank-card-amount {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-top: 2px;
+}
+
+.big-bank-card-chip {
+  font-size: 1.8rem;
+  opacity: 0.9;
+}
+
+.big-bank-card-number {
+  font-size: 1.2rem;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+  opacity: 0.95;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.big-bank-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.big-bank-card-holder-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  font-weight: 600;
+}
+
+.big-bank-card-holder-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.big-bank-card-expiry {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.card-detail-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 22px;
+}
+
+.card-detail-info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-detail-info-item .info-label {
+  font-size: 0.72rem;
+  color: #64748B;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 3px;
+}
+
+.card-detail-info-item .info-val {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-detail-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
