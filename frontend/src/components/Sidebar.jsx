@@ -39,14 +39,14 @@ function Sidebar({ isOpen, onClose }) {
                                 </div>
                             </Link>
 
-                            {/* Prominent Sidebar Close Button */}
+                            {/* Sidebar Menu Toggle Button */}
                             <button
                                 className="sidebar-close-btn"
                                 onClick={onClose}
-                                title="Close sidebar"
-                                aria-label="Close sidebar"
+                                title="Collapse sidebar"
+                                aria-label="Collapse sidebar"
                             >
-                                <i className="bi bi-x-lg"></i>
+                                <i className="bi bi-layout-sidebar-inset"></i>
                             </button>
                         </div>
 

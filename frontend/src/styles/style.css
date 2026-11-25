@@ -153,7 +153,7 @@ body {
   gap: 5px;
 }
 
-/* Dedicated Close Button Inside Sidebar Header */
+/* Sidebar Toggle Button Inside Sidebar Header */
 .sidebar-close-btn {
   width: 32px;
   height: 32px;
@@ -164,16 +164,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .sidebar-close-btn:hover {
-  background-color: #FEE2E2;
-  color: #DC2626;
-  border-color: #FECACA;
-  transform: scale(1.06);
+  background-color: #EFF6FF;
+  color: #2563EB;
+  border-color: #BFDBFE;
+  transform: scale(1.05);
 }
 
 .sidebar-nav-container {

@@ -23,17 +23,18 @@ function Navbar({ onToggleSidebar, isSidebarOpen }) {
 
     return (
         <header className="official-topbar">
-            {/* Left: Universal Sidebar Toggle Button & Search Box */}
+            {/* Left: Search Box (Menu toggle removed from header when sidebar is open) */}
             <div className="d-flex align-items-center gap-2 gap-md-3">
-                {/* Always-visible Sidebar Toggle Button (Desktop & Mobile) */}
-                <button
-                    className="topbar-toggle-btn"
-                    onClick={onToggleSidebar}
-                    aria-label={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
-                    title={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
-                >
-                    <i className={`bi ${isSidebarOpen ? "bi-layout-sidebar-inset" : "bi-layout-sidebar"}`}></i>
-                </button>
+                {!isSidebarOpen && (
+                    <button
+                        className="topbar-toggle-btn"
+                        onClick={onToggleSidebar}
+                        aria-label="Open Sidebar"
+                        title="Open Sidebar"
+                    >
+                        <i className="bi bi-layout-sidebar"></i>
+                    </button>
+                )}
 
                 {/* Responsive Search Input */}
                 <div className="topbar-search-box">
