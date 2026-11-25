@@ -92,6 +92,11 @@ async function initDb() {
     `);
 
     await pool.query(`
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS payment_pin VARCHAR(255)
+    `);
+
+    await pool.query(`
         CREATE UNIQUE INDEX IF NOT EXISTS users_phone_key
         ON users(phone)
         WHERE phone IS NOT NULL

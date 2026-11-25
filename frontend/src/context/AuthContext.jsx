@@ -28,6 +28,14 @@ export function AuthProvider({ children }) {
         }
     }, []);
 
+    const updateUser = useCallback((patch) => {
+        setUser((prev) => {
+            const next = { ...prev, ...patch };
+            localStorage.setItem("user", JSON.stringify(next));
+            return next;
+        });
+    }, []);
+
     const register = useCallback(async (form) => {
         const { data } = await API.post("/auth/register", form);
         persist(data.user, data.token);
@@ -49,9 +57,10 @@ export function AuthProvider({ children }) {
             isAuthenticated: Boolean(user && token),
             register,
             login,
-            logout
+            logout,
+            updateUser
         }),
-        [user, token, register, login, logout]
+        [user, token, register, login, logout, updateUser]
     );
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -4,7 +4,7 @@ import { useAuth } from "../context/auth";
 import { formatINR } from "../utils/currency";
 
 function Payments() {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
 
     // Data States
     const [cards, setCards] = useState([]);
@@ -21,6 +21,19 @@ function Payments() {
     const [selectedCardId, setSelectedCardId] = useState("");
     const [notes, setNotes] = useState("");
     const [paying, setPaying] = useState(false);
+
+    // PIN Verification States
+    const [showPinModal, setShowPinModal] = useState(false);
+    const [enteredPin, setEnteredPin] = useState("");
+    const [pinError, setPinError] = useState("");
+    const [showEnteredPin, setShowEnteredPin] = useState(false);
+
+    // Set / Change PIN States
+    const [showSetPinModal, setShowSetPinModal] = useState(false);
+    const [newPin, setNewPin] = useState("");
+    const [confirmNewPin, setConfirmNewPin] = useState("");
+    const [changePinError, setChangePinError] = useState("");
+    const [settingPin, setSettingPin] = useState(false);
 
     // Feedback States
     const [paymentSuccess, setPaymentSuccess] = useState(null);
@@ -48,8 +61,19 @@ function Payments() {
         }
     }
 
+    // Ensure user profile has has_pin populated
     useEffect(() => {
         loadPaymentData();
+
+        if (user && user.has_pin === undefined) {
+            API.get("/auth/me")
+                .then((res) => {
+                    if (res.data?.user && updateUser) {
+                        updateUser({ has_pin: Boolean(res.data.user.has_pin) });
+                    }
+                })
+                .catch(() => {});
+        }
     }, []);
 
     // Total available card balance
@@ -109,8 +133,8 @@ function Payments() {
         }
     }
 
-    // Handle Transfer Submit
-    async function handlePaymentSubmit(e) {
+    // Step 1: Initiate Transfer form submit -> validate inputs and prompt for PIN
+    function handleInitiatePayment(e) {
         e.preventDefault();
         setPaymentError("");
         setPaymentSuccess(null);
@@ -136,16 +160,46 @@ function Payments() {
             return;
         }
 
+        // Check if user has set a Security PIN
+        if (!user?.has_pin) {
+            setChangePinError("");
+            setNewPin("");
+            setConfirmNewPin("");
+            setShowSetPinModal(true);
+            return;
+        }
+
+        // Open PIN confirmation dialog
+        setEnteredPin("");
+        setPinError("");
+        setShowPinModal(true);
+    }
+
+    // Step 2: Authorize payment with 4-digit PIN
+    async function handleConfirmPaymentWithPin(e) {
+        e.preventDefault();
+        setPinError("");
+
+        const cleanPin = String(enteredPin).replace(/\D/g, "");
+        if (cleanPin.length !== 4) {
+            setPinError("Please enter your 4-digit Security PIN.");
+            return;
+        }
+
         setPaying(true);
 
         try {
             const res = await API.post("/payments/transfer", {
                 recipient_phone: verifiedRecipient.phone,
-                amount: numAmount,
+                amount: Number(amount),
                 notes: notes.trim(),
-                card_id: activePayingCard.id
+                card_id: activePayingCard.id,
+                pin: cleanPin
             });
 
+            // Payment succeeded!
+            setShowPinModal(false);
+            setEnteredPin("");
             setPaymentSuccess(res.data);
             setAmount("");
             setNotes("");
@@ -155,9 +209,52 @@ function Payments() {
             // Reload cards and history to reflect updated balance
             await loadPaymentData();
         } catch (err) {
-            setPaymentError(err.response?.data?.message || "Payment transfer failed. Please try again.");
+            const msg = err.response?.data?.message || "Payment transfer failed. Please try again.";
+            setPinError(msg);
+            setEnteredPin("");
         } finally {
             setPaying(false);
+        }
+    }
+
+    // Set or Change Security PIN
+    async function handleSavePin(e) {
+        e.preventDefault();
+        setChangePinError("");
+
+        const cleanNew = String(newPin).replace(/\D/g, "");
+        const cleanConfirm = String(confirmNewPin).replace(/\D/g, "");
+
+        if (cleanNew.length !== 4) {
+            setChangePinError("PIN must be exactly 4 digits.");
+            return;
+        }
+
+        if (cleanNew !== cleanConfirm) {
+            setChangePinError("PINs do not match. Please verify.");
+            return;
+        }
+
+        setSettingPin(true);
+        try {
+            await API.post("/auth/set-pin", { pin: cleanNew });
+            if (updateUser) {
+                updateUser({ has_pin: true });
+            }
+            setShowSetPinModal(false);
+            setNewPin("");
+            setConfirmNewPin("");
+
+            // If user was in middle of paying, prompt for PIN to complete
+            if (verifiedRecipient && amount) {
+                setEnteredPin("");
+                setPinError("");
+                setShowPinModal(true);
+            }
+        } catch (err) {
+            setChangePinError(err.response?.data?.message || "Could not set PIN. Please try again.");
+        } finally {
+            setSettingPin(false);
         }
     }
 
@@ -173,11 +270,26 @@ function Payments() {
     return (
         <div className="page-container">
             {/* Page Header */}
-            <div className="mb-4">
-                <h2 className="page-title mb-1">Instant Payments</h2>
-                <p className="text-muted small mb-0">
-                    Pay any registered user instantly using their 10-digit mobile number.
-                </p>
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div>
+                    <h2 className="page-title mb-1">Instant Payments</h2>
+                    <p className="text-muted small mb-0">
+                        Pay any registered user instantly using their 10-digit mobile number.
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2 d-inline-flex align-items-center gap-2"
+                    onClick={() => {
+                        setChangePinError("");
+                        setNewPin("");
+                        setConfirmNewPin("");
+                        setShowSetPinModal(true);
+                    }}
+                >
+                    <i className="bi bi-shield-lock-fill text-primary"></i>
+                    <span>{user?.has_pin ? "Change Security PIN" : "Set Security PIN"}</span>
+                </button>
             </div>
 
             {/* Success Receipt Banner */}
@@ -230,7 +342,7 @@ function Payments() {
                             </div>
                         )}
 
-                        <form onSubmit={handlePaymentSubmit}>
+                        <form onSubmit={handleInitiatePayment}>
                             {/* Step 1: Recipient Mobile Number */}
                             <div className="mb-3">
                                 <label className="form-label small fw-bold text-muted mb-1">
@@ -372,21 +484,12 @@ function Payments() {
                                 type="submit"
                                 className="btn btn-primary w-100 py-3 d-flex align-items-center justify-content-center gap-2"
                                 style={{ borderRadius: "14px", fontWeight: 700, fontSize: "1rem", boxShadow: "0 4px 14px rgba(37, 99, 235, 0.28)" }}
-                                disabled={paying || !verifiedRecipient || !amount}
+                                disabled={!verifiedRecipient || !amount}
                             >
-                                {paying ? (
-                                    <>
-                                        <span className="spinner-border spinner-border-sm"></span>
-                                        <span>Processing Instant Transfer...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <i className="bi bi-lock-fill"></i>
-                                        <span>
-                                            Pay {amount ? formatINR(amount) : ""} {verifiedRecipient ? `to ${verifiedRecipient.name}` : "Securely"}
-                                        </span>
-                                    </>
-                                )}
+                                <i className="bi bi-shield-lock-fill"></i>
+                                <span>
+                                    Pay {amount ? formatINR(amount) : ""} {verifiedRecipient ? `to ${verifiedRecipient.name}` : "Securely"}
+                                </span>
                             </button>
                         </form>
                     </div>
@@ -426,6 +529,12 @@ function Payments() {
                             <div className="d-flex justify-content-between py-1">
                                 <span>Your Registered Mobile:</span>
                                 <strong>+91 {user?.phone || "Not Set"}</strong>
+                            </div>
+                            <div className="d-flex justify-content-between py-1">
+                                <span>Security PIN:</span>
+                                <strong className={user?.has_pin ? "text-success" : "text-warning"}>
+                                    {user?.has_pin ? "Active (4-Digit PIN)" : "Not Set"}
+                                </strong>
                             </div>
                             <div className="d-flex justify-content-between py-1">
                                 <span>Transfer Fee:</span>
@@ -505,6 +614,273 @@ function Payments() {
                     </div>
                 )}
             </div>
+
+            {/* Modal 1: 4-Digit Security PIN Authorize Modal */}
+            {showPinModal && (
+                <div
+                    className="modal show d-block"
+                    tabIndex="-1"
+                    style={{
+                        backgroundColor: "rgba(15, 23, 42, 0.6)",
+                        backdropFilter: "blur(4px)",
+                        zIndex: 1055
+                    }}
+                >
+                    <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: "420px" }}>
+                        <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                            <div className="modal-header border-0 pb-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                                <div className="d-flex align-items-center gap-2">
+                                    <div
+                                        className="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center"
+                                        style={{ width: "36px", height: "36px" }}
+                                    >
+                                        <i className="bi bi-shield-lock-fill fs-5"></i>
+                                    </div>
+                                    <h5 className="modal-title fw-bold mb-0" style={{ fontSize: "1.1rem" }}>
+                                        Authorize Payment
+                                    </h5>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => {
+                                        setShowPinModal(false);
+                                        setEnteredPin("");
+                                        setPinError("");
+                                    }}
+                                    disabled={paying}
+                                ></button>
+                            </div>
+
+                            <div className="modal-body px-4 pt-3 pb-4">
+                                {/* Payment Summary */}
+                                <div className="p-3 rounded-3 bg-light border text-center mb-3">
+                                    <small className="text-muted d-block mb-1">Paying To</small>
+                                    <h6 className="fw-bold mb-0 text-dark">{verifiedRecipient?.name}</h6>
+                                    <small className="text-muted font-monospace">+91 {verifiedRecipient?.phone}</small>
+                                    <div className="mt-2 pt-2 border-top">
+                                        <span className="fs-3 fw-bold text-primary">{formatINR(amount)}</span>
+                                        <div className="small text-muted mt-1">
+                                            From: {activePayingCard?.card_name} ({activePayingCard?.card_number})
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Pin Error Display (e.g. Incorrect PIN) */}
+                                {pinError && (
+                                    <div className="alert alert-danger py-2 px-3 small rounded-3 mb-3 d-flex align-items-start gap-2">
+                                        <i className="bi bi-exclamation-octagon-fill text-danger flex-shrink-0 mt-1 fs-6"></i>
+                                        <div>
+                                            <span className="fw-bold d-block">Payment Declined</span>
+                                            <span>{pinError}</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <form onSubmit={handleConfirmPaymentWithPin}>
+                                    <div className="mb-3 text-center">
+                                        <label className="form-label small fw-bold text-muted mb-2">
+                                            Enter 4-Digit Security PIN
+                                        </label>
+                                        <div className="d-flex justify-content-center">
+                                            <input
+                                                type={showEnteredPin ? "text" : "password"}
+                                                inputMode="numeric"
+                                                pattern="[0-9]{4}"
+                                                maxLength={4}
+                                                autoFocus
+                                                className="form-control text-center fw-bold fs-4 tracking-widest"
+                                                style={{
+                                                    maxWidth: "200px",
+                                                    letterSpacing: "0.5em",
+                                                    borderRadius: "12px",
+                                                    borderColor: pinError ? "#dc3545" : undefined
+                                                }}
+                                                placeholder="••••"
+                                                value={enteredPin}
+                                                onChange={(e) => {
+                                                    const v = e.target.value.replace(/\D/g, "").slice(0, 4);
+                                                    setEnteredPin(v);
+                                                    if (pinError) setPinError("");
+                                                }}
+                                                disabled={paying}
+                                            />
+                                        </div>
+                                        <div className="mt-2">
+                                            <button
+                                                type="button"
+                                                className="btn btn-link btn-sm text-decoration-none text-muted py-0"
+                                                onClick={() => setShowEnteredPin(!showEnteredPin)}
+                                            >
+                                                <i className={`bi ${showEnteredPin ? "bi-eye-slash" : "bi-eye"} me-1`}></i>
+                                                {showEnteredPin ? "Hide PIN" : "Show PIN"}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="d-flex gap-2 mt-4">
+                                        <button
+                                            type="button"
+                                            className="btn btn-light w-50 py-2 rounded-3 fw-semibold"
+                                            onClick={() => {
+                                                setShowPinModal(false);
+                                                setEnteredPin("");
+                                                setPinError("");
+                                            }}
+                                            disabled={paying}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="btn btn-primary w-50 py-2 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-2"
+                                            disabled={paying || enteredPin.length !== 4}
+                                        >
+                                            {paying ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm"></span>
+                                                    <span>Authorizing...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="bi bi-lock-fill"></i>
+                                                    <span>Confirm & Pay</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal 2: Set or Change 4-Digit Security PIN */}
+            {showSetPinModal && (
+                <div
+                    className="modal show d-block"
+                    tabIndex="-1"
+                    style={{
+                        backgroundColor: "rgba(15, 23, 42, 0.6)",
+                        backdropFilter: "blur(4px)",
+                        zIndex: 1055
+                    }}
+                >
+                    <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: "420px" }}>
+                        <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                            <div className="modal-header border-0 pb-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                                <div className="d-flex align-items-center gap-2">
+                                    <div
+                                        className="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center"
+                                        style={{ width: "36px", height: "36px" }}
+                                    >
+                                        <i className="bi bi-key-fill fs-5"></i>
+                                    </div>
+                                    <h5 className="modal-title fw-bold mb-0" style={{ fontSize: "1.1rem" }}>
+                                        {user?.has_pin ? "Change Security PIN" : "Set 4-Digit Security PIN"}
+                                    </h5>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => {
+                                        setShowSetPinModal(false);
+                                        setNewPin("");
+                                        setConfirmNewPin("");
+                                        setChangePinError("");
+                                    }}
+                                    disabled={settingPin}
+                                ></button>
+                            </div>
+
+                            <div className="modal-body px-4 pt-3 pb-4">
+                                <p className="text-muted small mb-3">
+                                    Set a secret 4-digit PIN to securely authorize instant fund transfers from your vault cards.
+                                </p>
+
+                                {changePinError && (
+                                    <div className="alert alert-danger py-2 px-3 small rounded-3 mb-3 d-flex align-items-center gap-2">
+                                        <i className="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                                        <span>{changePinError}</span>
+                                    </div>
+                                )}
+
+                                <form onSubmit={handleSavePin}>
+                                    <div className="mb-3">
+                                        <label className="form-label small fw-bold text-muted mb-1">
+                                            Enter New 4-Digit PIN
+                                        </label>
+                                        <input
+                                            type="password"
+                                            inputMode="numeric"
+                                            pattern="[0-9]{4}"
+                                            maxLength={4}
+                                            required
+                                            className="form-control text-center fw-bold fs-5"
+                                            style={{ letterSpacing: "0.4em" }}
+                                            placeholder="••••"
+                                            value={newPin}
+                                            onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                                        />
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <label className="form-label small fw-bold text-muted mb-1">
+                                            Confirm 4-Digit PIN
+                                        </label>
+                                        <input
+                                            type="password"
+                                            inputMode="numeric"
+                                            pattern="[0-9]{4}"
+                                            maxLength={4}
+                                            required
+                                            className="form-control text-center fw-bold fs-5"
+                                            style={{ letterSpacing: "0.4em" }}
+                                            placeholder="••••"
+                                            value={confirmNewPin}
+                                            onChange={(e) => setConfirmNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                                        />
+                                    </div>
+
+                                    <div className="d-flex gap-2">
+                                        <button
+                                            type="button"
+                                            className="btn btn-light w-50 py-2 rounded-3 fw-semibold"
+                                            onClick={() => {
+                                                setShowSetPinModal(false);
+                                                setNewPin("");
+                                                setConfirmNewPin("");
+                                                setChangePinError("");
+                                            }}
+                                            disabled={settingPin}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="btn btn-primary w-50 py-2 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-2"
+                                            disabled={settingPin || newPin.length !== 4 || confirmNewPin.length !== 4}
+                                        >
+                                            {settingPin ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm"></span>
+                                                    <span>Saving...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="bi bi-shield-check"></i>
+                                                    <span>Save PIN</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

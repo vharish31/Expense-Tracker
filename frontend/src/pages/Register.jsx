@@ -5,10 +5,11 @@ import { useAuth } from "../context/auth";
 function Register() {
     const { register, isAuthenticated } = useAuth();
     const navigate = useNavigate();
-    const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
+    const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", pin: "" });
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [showPin, setShowPin] = useState(false);
 
     if (isAuthenticated) {
         return <Navigate to="/" replace />;
@@ -114,7 +115,7 @@ function Register() {
                     </div>
 
                     {/* Password Input with Visibility Toggle */}
-                    <div className="mb-4">
+                    <div className="mb-3">
                         <label className="form-label small fw-bold text-muted mb-1">Password</label>
                         <div className="input-group input-group-auth">
                             <span className="input-group-text auth-input-icon">
@@ -139,6 +140,47 @@ function Register() {
                                 <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}></i>
                             </button>
                         </div>
+                    </div>
+
+                    {/* 4-Digit Security PIN (For Instant Payments) */}
+                    <div className="mb-4">
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                            <label className="form-label small fw-bold text-muted mb-0">
+                                4-Digit Payment Security PIN
+                            </label>
+                            <span className="badge bg-light text-primary border small">Required for transfers</span>
+                        </div>
+                        <div className="input-group input-group-auth">
+                            <span className="input-group-text auth-input-icon">
+                                <i className="bi bi-shield-lock"></i>
+                            </span>
+                            <input
+                                type={showPin ? "text" : "password"}
+                                className="form-control auth-input-field"
+                                placeholder="4-digit PIN (e.g. 1234)"
+                                required
+                                maxLength={4}
+                                pattern="[0-9]{4}"
+                                inputMode="numeric"
+                                value={form.pin}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, "").slice(0, 4);
+                                    setForm({ ...form, pin: val });
+                                }}
+                            />
+                            <button
+                                type="button"
+                                className="btn auth-input-toggle"
+                                onClick={() => setShowPin(!showPin)}
+                                title={showPin ? "Hide PIN" : "Show PIN"}
+                                tabIndex="-1"
+                            >
+                                <i className={`bi ${showPin ? "bi-eye-slash" : "bi-eye"}`}></i>
+                            </button>
+                        </div>
+                        <small className="text-muted" style={{ fontSize: "0.78rem" }}>
+                            You will enter this 4-digit PIN every time you make a payment.
+                        </small>
                     </div>
 
                     {/* Submit Button */}

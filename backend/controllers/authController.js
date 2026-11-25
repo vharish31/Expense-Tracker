@@ -10,7 +10,7 @@ function createToken(userId) {
 
 exports.register = async (req, res) => {
     try {
-        const { name, email, password, phone } = req.body;
+        const { name, email, password, phone, pin } = req.body;
 
         if (!name || !email || !password || !phone) {
             return res.status(400).json({
@@ -29,6 +29,17 @@ exports.register = async (req, res) => {
             return res.status(400).json({
                 message: "Password must be at least 4 characters"
             });
+        }
+
+        let hashedPin = null;
+        if (pin) {
+            const cleanPin = String(pin).replace(/\D/g, "");
+            if (cleanPin.length !== 4) {
+                return res.status(400).json({
+                    message: "Security PIN must be exactly 4 digits"
+                });
+            }
+            hashedPin = await bcrypt.hash(cleanPin, 10);
         }
 
         const existingEmail = await User.findByEmail(email.trim().toLowerCase());
@@ -50,7 +61,8 @@ exports.register = async (req, res) => {
             name: name.trim(),
             email: email.trim().toLowerCase(),
             phone: cleanPhone,
-            password: hashedPassword
+            password: hashedPassword,
+            payment_pin: hashedPin
         });
 
         res.status(201).json({
@@ -60,7 +72,8 @@ exports.register = async (req, res) => {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                phone: user.phone
+                phone: user.phone,
+                has_pin: Boolean(hashedPin)
             }
         });
     } catch (error) {
@@ -98,12 +111,35 @@ exports.login = async (req, res) => {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                phone: user.phone
+                phone: user.phone,
+                has_pin: Boolean(user.payment_pin)
             }
         });
     } catch (error) {
         console.error("Login error:", error.message);
         res.status(500).json({ message: "Error logging in" });
+    }
+};
+
+exports.setPaymentPin = async (req, res) => {
+    try {
+        const { pin } = req.body;
+        const cleanPin = String(pin || "").replace(/\D/g, "");
+
+        if (cleanPin.length !== 4) {
+            return res.status(400).json({ message: "Security PIN must be exactly 4 digits" });
+        }
+
+        const hashedPin = await bcrypt.hash(cleanPin, 10);
+        await User.updatePaymentPin(req.user.id, hashedPin);
+
+        res.status(200).json({
+            message: "4-Digit Security PIN set successfully",
+            has_pin: true
+        });
+    } catch (error) {
+        console.error("Set PIN error:", error);
+        res.status(500).json({ message: "Error setting security PIN" });
     }
 };
 
