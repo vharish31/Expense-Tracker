@@ -517,7 +517,7 @@ function Dashboard() {
 
                 {/* Column 2: My Transactions */}
                 <div className="col-12 col-xl-5 col-lg-5">
-                    <div className="official-card h-100 d-flex flex-column justify-content-between">
+                    <div className="official-card h-100 d-flex flex-column">
                         <div className="card-header-clean">
                             <h3 className="card-title-clean">My Transactions</h3>
                             <Link to="/transactions" className="card-link-clean">
