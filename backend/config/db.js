@@ -93,6 +93,11 @@ async function initDb() {
 
     await pool.query(`
         ALTER TABLE transactions
+        ADD COLUMN IF NOT EXISTS card_id INTEGER REFERENCES cards(id) ON DELETE SET NULL
+    `);
+
+    await pool.query(`
+        ALTER TABLE transactions
         ALTER COLUMN category DROP NOT NULL
     `);
 

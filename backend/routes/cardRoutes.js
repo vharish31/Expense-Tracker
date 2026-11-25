@@ -7,6 +7,7 @@ router.use(verifyToken);
 
 router.get("/", cardController.getCards);
 router.post("/", cardController.addCard);
+router.put("/:id", cardController.updateCard);
 router.delete("/:id", cardController.deleteCard);
 
 module.exports = router;

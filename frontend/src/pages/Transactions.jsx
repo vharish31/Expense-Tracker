@@ -19,6 +19,7 @@ function Transactions() {
     const { user } = useAuth();
 
     const [transactions, setTransactions] = useState([]);
+    const [cards, setCards] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
@@ -33,8 +34,12 @@ function Transactions() {
 
     async function fetchData() {
         try {
-            const res = await API.get("/transactions");
-            setTransactions(res.data || []);
+            const [txRes, cardRes] = await Promise.all([
+                API.get("/transactions"),
+                API.get("/cards").catch(() => ({ data: [] }))
+            ]);
+            setTransactions(txRes.data || []);
+            setCards(cardRes.data || []);
         } catch (error) {
             console.error("Error fetching transactions:", error);
         } finally {
@@ -75,7 +80,12 @@ function Transactions() {
         }));
     }, [transactions]);
 
-    // Statement totals
+    // Total Card Balance from User Vaults
+    const totalCardBalance = useMemo(() => {
+        return cards.reduce((sum, c) => sum + (Number(c.balance) || 0), 0);
+    }, [cards]);
+
+    // Statement totals - Net balance reflects card balances automatically
     const { totalCredits, totalDebits, netBalance } = useMemo(() => {
         let cr = 0;
         let dr = 0;
@@ -84,12 +94,13 @@ function Transactions() {
             if (t.type === "Income") cr += amt;
             else dr += amt;
         });
+        const effectiveNet = cards.length > 0 ? totalCardBalance : (cr - dr);
         return {
             totalCredits: cr,
             totalDebits: dr,
-            netBalance: cr - dr
+            netBalance: effectiveNet
         };
-    }, [transactions]);
+    }, [transactions, cards, totalCardBalance]);
 
     // Filter transactions
     const filteredTransactions = useMemo(() => {
@@ -340,6 +351,7 @@ function Transactions() {
                 <TransactionForm
                     formData={formData}
                     netBalance={netBalance}
+                    cards={cards}
                     onChange={handleChange}
                     onSubmit={handleSubmit}
                     onCancel={resetForm}

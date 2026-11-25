@@ -18,7 +18,8 @@ exports.create = async (userId, data) => {
         category,
         description,
         transaction_date,
-        ref_no
+        ref_no,
+        card_id
     } = data;
 
     const finalCategory = category || "General";
@@ -26,10 +27,10 @@ exports.create = async (userId, data) => {
 
     const result = await db.query(
         `INSERT INTO transactions
-        (user_id, title, amount, type, category, description, transaction_date, ref_no)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        (user_id, title, amount, type, category, description, transaction_date, ref_no, card_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *`,
-        [userId, title, amount, type, finalCategory, description || "", transaction_date, generatedRef]
+        [userId, title, amount, type, finalCategory, description || "", transaction_date, generatedRef, card_id || null]
     );
 
     return result.rows[0];

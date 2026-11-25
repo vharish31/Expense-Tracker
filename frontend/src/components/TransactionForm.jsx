@@ -1,6 +1,7 @@
 function TransactionForm({
     formData,
     netBalance = 0,
+    cards = [],
     onChange,
     onSubmit,
     onCancel
@@ -81,6 +82,24 @@ function TransactionForm({
                             </option>
                         </select>
                     </div>
+
+                    {cards && cards.length > 0 && (
+                        <div className="col-12 col-md-4">
+                            <label className="form-label fw-semibold small text-muted">Vault Card</label>
+                            <select
+                                name="card_id"
+                                className="form-select-official"
+                                value={formData.card_id || (cards[0] && cards[0].id) || ""}
+                                onChange={onChange}
+                            >
+                                {cards.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.card_name} (₹{Number(c.balance).toFixed(2)})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     <div className="col-12 col-md-4">
                         <label className="form-label fw-semibold small text-muted">Ref. / UTR Number</label>

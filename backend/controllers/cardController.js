@@ -89,3 +89,46 @@ exports.deleteCard = async (req, res) => {
         res.status(500).json({ message: "Error deleting card from vault" });
     }
 };
+
+// Update card (balance, name, etc.)
+exports.updateCard = async (req, res) => {
+    try {
+        const { card_name, card_network, card_number, balance, card_holder, expiry_date, theme } = req.body;
+
+        const result = await db.query(
+            `UPDATE cards
+             SET card_name = COALESCE($1, card_name),
+                 card_network = COALESCE($2, card_network),
+                 card_number = COALESCE($3, card_number),
+                 balance = COALESCE($4, balance),
+                 card_holder = COALESCE($5, card_holder),
+                 expiry_date = COALESCE($6, expiry_date),
+                 theme = COALESCE($7, theme)
+             WHERE id = $8 AND user_id = $9
+             RETURNING *`,
+            [
+                card_name || null,
+                card_network || null,
+                card_number || null,
+                balance !== undefined ? Number(balance) : null,
+                card_holder || null,
+                expiry_date || null,
+                theme || null,
+                req.params.id,
+                req.user.id
+            ]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Card not found in your vault" });
+        }
+
+        res.status(200).json({
+            message: "Card updated successfully",
+            card: result.rows[0]
+        });
+    } catch (error) {
+        console.error("Error updating card:", error);
+        res.status(500).json({ message: "Error updating card" });
+    }
+};

@@ -54,6 +54,7 @@ function Dashboard() {
         amount: "",
         type: "Expense",
         category: "General",
+        card_id: "",
         description: "",
         transaction_date: new Date().toISOString().slice(0, 10)
     });
@@ -89,7 +90,12 @@ function Dashboard() {
         loadData();
     }, []);
 
-    // Financial Metrics
+    // Total Card Balance from User Vaults
+    const totalCardBalance = useMemo(() => {
+        return cards.reduce((sum, c) => sum + (Number(c.balance) || 0), 0);
+    }, [cards]);
+
+    // Financial Metrics - Total balance updates automatically based on vault cards!
     const { totalIncome, totalExpenses, totalBalance, todayIncome, todayExpenses } = useMemo(() => {
         let income = 0;
         let expense = 0;
@@ -116,14 +122,17 @@ function Dashboard() {
         if (tIncome === 0 && income > 0) tIncome = Math.round(income / 30);
         if (tExpense === 0 && expense > 0) tExpense = Math.round(expense / 30);
 
+        // Based on card balance, the total balance in the dashboard updates automatically!
+        const effectiveTotalBalance = cards.length > 0 ? totalCardBalance : (income - expense);
+
         return {
             totalIncome: income,
             totalExpenses: expense,
-            totalBalance: income - expense,
+            totalBalance: effectiveTotalBalance,
             todayIncome: tIncome,
             todayExpenses: tExpense
         };
-    }, [transactions]);
+    }, [transactions, cards, totalCardBalance]);
 
     // Carousel Navigation
     function handleNextCard() {
@@ -355,20 +364,31 @@ function Dashboard() {
                 alert(`Transaction Declined: Insufficient balance. Available balance is ${formatINR(totalBalance)}, which is less than requested debit of ₹${Number(quickForm.amount).toFixed(2)}.`);
                 return;
             }
+            if (quickForm.card_id) {
+                const selectedCard = cards.find((c) => c.id === Number(quickForm.card_id));
+                if (selectedCard && Number(selectedCard.balance) < Number(quickForm.amount)) {
+                    alert(`Transaction Declined: Card "${selectedCard.card_name}" has ${formatINR(selectedCard.balance)}, which is less than requested debit of ₹${Number(quickForm.amount).toFixed(2)}.`);
+                    return;
+                }
+            }
         }
 
         try {
-            await API.post("/transactions", quickForm);
+            await API.post("/transactions", {
+                ...quickForm,
+                card_id: quickForm.card_id || (cards[0] ? cards[0].id : null)
+            });
             setShowQuickModal(false);
             setQuickForm({
                 title: "",
                 amount: "",
                 type: totalBalance <= 0 ? "Income" : "Expense",
                 category: "General",
+                card_id: cards[0] ? cards[0].id : "",
                 description: "",
                 transaction_date: new Date().toISOString().slice(0, 10)
             });
-            loadData();
+            await loadData();
         } catch (err) {
             alert(err.response?.data?.message || "Failed to record transaction");
         }
@@ -761,6 +781,23 @@ function Dashboard() {
                                             </button>
                                         </div>
                                     </div>
+
+                                    {cards.length > 0 && (
+                                        <div className="mb-3">
+                                            <label className="form-label small fw-bold text-muted">Select Vault Card</label>
+                                            <select
+                                                className="form-select-official w-100"
+                                                value={quickForm.card_id || (cards[0] && cards[0].id) || ""}
+                                                onChange={(e) => setQuickForm({ ...quickForm, card_id: e.target.value })}
+                                            >
+                                                {cards.map((c) => (
+                                                    <option key={c.id} value={c.id}>
+                                                        {c.card_name} ({formatINR(c.balance)})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
 
                                     <div className="mb-3">
                                         <label className="form-label small fw-bold text-muted">Title / Particulars</label>
