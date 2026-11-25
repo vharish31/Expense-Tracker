@@ -42,7 +42,7 @@ function Navbar({ onToggleSidebar, isSidebarOpen }) {
                     <input
                         type="text"
                         className="topbar-search-input"
-                        placeholder="Search name or amount..."
+                        placeholder="Search..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onKeyDown={handleSearch}

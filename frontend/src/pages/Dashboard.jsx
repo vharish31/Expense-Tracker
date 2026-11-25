@@ -369,7 +369,7 @@ function Dashboard() {
             {/* =================================================================
                 HERO SECTION: TOTAL BALANCE | USER-MANAGED CARDS VAULT
                 ================================================================= */}
-            <div className="row g-4 mb-4 align-items-stretch">
+            <div className="row g-3 g-md-4 mb-3 mb-md-4 align-items-stretch">
                 {/* 1. Total Balance Column */}
                 <div className="col-12 col-xl-4 col-lg-5">
                     <div className="official-card hero-balance-box">
@@ -492,7 +492,7 @@ function Dashboard() {
             {/* =================================================================
                 LOWER SECTION (2 COLUMNS): ACTIVITIES | MY TRANSACTIONS
                 ================================================================= */}
-            <div className="row g-4">
+            <div className="row g-3 g-md-4">
                 {/* Column 1: Activities (Smooth Spline Wave Chart) */}
                 <div className="col-12 col-xl-7 col-lg-7">
                     <div className="official-card h-100 d-flex flex-column justify-content-between">
