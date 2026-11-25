@@ -1738,6 +1738,65 @@ body {
   color: #4F46E5 !important;
 }
 
+.input-group-auth.is-invalid {
+  border-color: #EF4444 !important;
+  background-color: #FEF2F2 !important;
+}
+
+.input-group-auth.is-invalid:focus-within {
+  border-color: #DC2626 !important;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15) !important;
+}
+
+.input-group-auth.is-valid {
+  border-color: #10B981 !important;
+  background-color: #F0FDF4 !important;
+}
+
+.input-group-auth.is-valid:focus-within {
+  border-color: #059669 !important;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15) !important;
+}
+
+.auth-field-error {
+  color: #DC2626;
+  font-size: 0.78rem;
+  font-weight: 500;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.auth-valid-icon {
+  color: #10B981;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.strength-bar-container {
+  height: 5px;
+  background-color: #E2E8F0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 6px;
+  transition: all 0.3s ease;
+}
+
+.strength-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strength-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
 .btn-auth-pill {
   width: 100% !important;
   height: 48px !important;

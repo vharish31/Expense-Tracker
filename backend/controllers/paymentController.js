@@ -1,6 +1,7 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
+const { validatePaymentPin } = require("../utils/validation");
 
 // Lookup a registered user by their 10-digit mobile number
 exports.lookupUserByPhone = async (req, res) => {
@@ -54,9 +55,9 @@ exports.transferFunds = async (req, res) => {
             return res.status(400).json({ message: "Security PIN is required to authorize payment" });
         }
 
-        const cleanPin = String(pin).replace(/\D/g, "");
-        if (cleanPin.length !== 4) {
-            return res.status(400).json({ message: "Security PIN must be exactly 4 digits" });
+        const pinVal = validatePaymentPin(pin);
+        if (!pinVal.valid) {
+            return res.status(400).json({ message: pinVal.error });
         }
 
         // Fetch sender's full profile including hashed payment PIN
@@ -68,12 +69,15 @@ exports.transferFunds = async (req, res) => {
         }
 
         // Verify Security PIN
-        const isPinCorrect = await bcrypt.compare(cleanPin, sender.payment_pin);
+        const isPinCorrect = await bcrypt.compare(pinVal.value, sender.payment_pin);
         if (!isPinCorrect) {
+            if (req.recordFailedPin) req.recordFailedPin();
             return res.status(400).json({
                 message: "Incorrect Security PIN. Payment was declined and no money was deducted."
             });
         }
+
+        if (req.clearFailedPin) req.clearFailedPin();
 
         if (!recipient_phone) {
             return res.status(400).json({ message: "Recipient mobile number is required" });

@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { ToastProvider } from "./components/Toast";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Analytics from "./pages/Analytics";
@@ -14,28 +15,30 @@ import Payments from "./pages/Payments";
 function App() {
     return (
         <ThemeProvider>
-            <AuthProvider>
-                <BrowserRouter>
-                    <Routes>
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/register" element={<Register />} />
-                        <Route
-                            element={
-                                <ProtectedRoute>
-                                    <Layout />
-                                </ProtectedRoute>
-                            }
-                        >
-                            <Route path="/" element={<Dashboard />} />
-                            <Route path="/transactions" element={<Transactions />} />
-                            <Route path="/payments" element={<Payments />} />
-                            <Route path="/analytics" element={<Analytics />} />
-                            <Route path="/budget" element={<Budget />} />
-                        </Route>
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                </BrowserRouter>
-            </AuthProvider>
+            <ToastProvider>
+                <AuthProvider>
+                    <BrowserRouter>
+                        <Routes>
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/register" element={<Register />} />
+                            <Route
+                                element={
+                                    <ProtectedRoute>
+                                        <Layout />
+                                    </ProtectedRoute>
+                                }
+                            >
+                                <Route path="/" element={<Dashboard />} />
+                                <Route path="/transactions" element={<Transactions />} />
+                                <Route path="/payments" element={<Payments />} />
+                                <Route path="/analytics" element={<Analytics />} />
+                                <Route path="/budget" element={<Budget />} />
+                            </Route>
+                            <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
+                    </BrowserRouter>
+                </AuthProvider>
+            </ToastProvider>
         </ThemeProvider>
     );
 }

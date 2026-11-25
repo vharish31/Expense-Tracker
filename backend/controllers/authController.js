@@ -1,6 +1,13 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const {
+    validateName,
+    validateEmail,
+    validateMobile,
+    validatePassword,
+    validatePaymentPin
+} = require("../utils/validation");
 
 function createToken(userId) {
     return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
@@ -8,63 +15,77 @@ function createToken(userId) {
     });
 }
 
+/**
+ * Register User
+ * Validates Name, Email, Mobile, Password, and 4-digit Payment PIN
+ */
 exports.register = async (req, res) => {
     try {
         const { name, email, password, phone, pin } = req.body;
 
-        if (!name || !email || !password || !phone) {
-            return res.status(400).json({
-                message: "Name, email, mobile number and password are required"
-            });
+        // 1. Full Name Validation
+        const nameVal = validateName(name);
+        if (!nameVal.valid) {
+            return res.status(400).json({ message: nameVal.error });
         }
 
-        const cleanPhone = String(phone).replace(/\D/g, "").slice(-10);
-        if (cleanPhone.length !== 10) {
-            return res.status(400).json({
-                message: "Please enter a valid 10-digit mobile number"
-            });
+        // 2. Email Validation
+        const emailVal = validateEmail(email);
+        if (!emailVal.valid) {
+            return res.status(400).json({ message: emailVal.error });
         }
 
-        if (String(password).length < 4) {
-            return res.status(400).json({
-                message: "Password must be at least 4 characters"
-            });
+        // 3. Indian Mobile Number Validation
+        const mobileVal = validateMobile(phone);
+        if (!mobileVal.valid) {
+            return res.status(400).json({ message: mobileVal.error });
         }
 
+        // 4. Password Policy Validation
+        const passwordVal = validatePassword(password);
+        if (!passwordVal.valid) {
+            return res.status(400).json({ message: passwordVal.error });
+        }
+
+        // 5. Four-Digit Payment Security PIN Validation (Required for transfers)
         let hashedPin = null;
-        if (pin) {
-            const cleanPin = String(pin).replace(/\D/g, "");
-            if (cleanPin.length !== 4) {
-                return res.status(400).json({
-                    message: "Security PIN must be exactly 4 digits"
-                });
+        if (pin !== undefined && pin !== null && String(pin).trim() !== "") {
+            const pinVal = validatePaymentPin(pin);
+            if (!pinVal.valid) {
+                return res.status(400).json({ message: pinVal.error });
             }
-            hashedPin = await bcrypt.hash(cleanPin, 10);
+            hashedPin = await bcrypt.hash(pinVal.value, 10);
         }
 
-        const existingEmail = await User.findByEmail(email.trim().toLowerCase());
+        // 6. Check Duplicate Email in PostgreSQL
+        const existingEmail = await User.findByEmail(emailVal.value);
         if (existingEmail) {
             return res.status(409).json({
-                message: "An account with this email already exists"
+                message: "This email address is already registered."
             });
         }
 
-        const existingPhone = await User.findByPhone(cleanPhone);
+        // 7. Check Duplicate Mobile in PostgreSQL
+        const existingPhone = await User.findByPhone(mobileVal.value);
         if (existingPhone) {
             return res.status(409).json({
-                message: "An account with this mobile number already exists"
+                message: "This mobile number is already registered."
             });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // 8. Hash Password securely using bcrypt
+        const hashedPassword = await bcrypt.hash(passwordVal.value, 10);
+
+        // 9. Persist user with parameterized SQL queries
         const user = await User.createUser({
-            name: name.trim(),
-            email: email.trim().toLowerCase(),
-            phone: cleanPhone,
+            name: nameVal.value,
+            email: emailVal.value,
+            phone: mobileVal.value,
             password: hashedPassword,
             payment_pin: hashedPin
         });
 
+        // 10. Generate token and return secure profile (never return password or PIN)
         res.status(201).json({
             message: "Registered successfully",
             token: createToken(user.id),
@@ -78,33 +99,51 @@ exports.register = async (req, res) => {
         });
     } catch (error) {
         console.error("Register error:", error.message);
-        res.status(500).json({ message: "Error registering user" });
+        res.status(500).json({ message: "An error occurred while creating your account. Please try again." });
     }
 };
 
+/**
+ * Login User
+ * Strictly validates format and uses generic error message to avoid account enumeration
+ */
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        if (!email || !password) {
-            return res.status(400).json({
-                message: "Email and password are required"
-            });
+        // 1. Email format validation
+        if (!email || typeof email !== "string" || email.trim() === "") {
+            return res.status(400).json({ message: "Please enter your email address." });
         }
 
-        const user = await User.findByEmail(email.trim().toLowerCase());
+        const emailVal = validateEmail(email);
+        if (!emailVal.valid) {
+            return res.status(400).json({ message: "Please enter a valid email address." });
+        }
 
+        // 2. Password presence validation
+        if (!password || typeof password !== "string" || password === "") {
+            return res.status(400).json({ message: "Please enter your password." });
+        }
+
+        // 3. User lookup
+        const user = await User.findByEmail(emailVal.value);
         if (!user) {
-            return res.status(401).json({ message: "Invalid email or password" });
+            if (req.recordFailedLogin) req.recordFailedLogin();
+            return res.status(401).json({ message: "Invalid email or password." });
         }
 
+        // 4. Password verification
         const isMatch = await bcrypt.compare(password, user.password);
-
         if (!isMatch) {
-            return res.status(401).json({ message: "Invalid email or password" });
+            if (req.recordFailedLogin) req.recordFailedLogin();
+            return res.status(401).json({ message: "Invalid email or password." });
         }
 
-        res.json({
+        // Clear failed attempts upon successful login
+        if (req.clearFailedLogin) req.clearFailedLogin();
+
+        res.status(200).json({
             message: "Login successful",
             token: createToken(user.id),
             user: {
@@ -117,20 +156,23 @@ exports.login = async (req, res) => {
         });
     } catch (error) {
         console.error("Login error:", error.message);
-        res.status(500).json({ message: "Error logging in" });
+        res.status(500).json({ message: "An error occurred during sign in. Please try again." });
     }
 };
 
+/**
+ * Set or Change 4-Digit Payment Security PIN
+ */
 exports.setPaymentPin = async (req, res) => {
     try {
         const { pin } = req.body;
-        const cleanPin = String(pin || "").replace(/\D/g, "");
 
-        if (cleanPin.length !== 4) {
-            return res.status(400).json({ message: "Security PIN must be exactly 4 digits" });
+        const pinVal = validatePaymentPin(pin);
+        if (!pinVal.valid) {
+            return res.status(400).json({ message: pinVal.error });
         }
 
-        const hashedPin = await bcrypt.hash(cleanPin, 10);
+        const hashedPin = await bcrypt.hash(pinVal.value, 10);
         await User.updatePaymentPin(req.user.id, hashedPin);
 
         res.status(200).json({
@@ -139,19 +181,21 @@ exports.setPaymentPin = async (req, res) => {
         });
     } catch (error) {
         console.error("Set PIN error:", error);
-        res.status(500).json({ message: "Error setting security PIN" });
+        res.status(500).json({ message: "Failed to set security PIN" });
     }
 };
 
+/**
+ * Get Profile
+ */
 exports.getMe = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
-
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        res.json({ user });
+        res.status(200).json({ user });
     } catch (error) {
         console.error("Profile error:", error.message);
         res.status(500).json({ message: "Error fetching profile" });

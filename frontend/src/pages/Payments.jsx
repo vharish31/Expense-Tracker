@@ -1,10 +1,13 @@
 import { useEffect, useState, useMemo } from "react";
 import API from "../services/api";
 import { useAuth } from "../context/auth";
+import { useToast } from "../components/Toast";
 import { formatINR } from "../utils/currency";
+import { validatePaymentPin, validateConfirmPin } from "../utils/validation";
 
 function Payments() {
     const { user, updateUser } = useAuth();
+    const { showToast } = useToast();
 
     // Data States
     const [cards, setCards] = useState([]);
@@ -182,7 +185,7 @@ function Payments() {
 
         const cleanPin = String(enteredPin).replace(/\D/g, "");
         if (cleanPin.length !== 4) {
-            setPinError("Please enter your 4-digit Security PIN.");
+            setPinError("PIN must contain exactly 4 digits.");
             return;
         }
 
@@ -201,6 +204,7 @@ function Payments() {
             setShowPinModal(false);
             setEnteredPin("");
             setPaymentSuccess(res.data);
+            showToast(`Payment of ₹${Number(amount).toFixed(2)} sent successfully!`, "success");
             setAmount("");
             setNotes("");
             setRecipientPhone("");
@@ -223,27 +227,27 @@ function Payments() {
         e.preventDefault();
         setChangePinError("");
 
-        const cleanNew = String(newPin).replace(/\D/g, "");
-        const cleanConfirm = String(confirmNewPin).replace(/\D/g, "");
-
-        if (cleanNew.length !== 4) {
-            setChangePinError("PIN must be exactly 4 digits.");
+        const pinVal = validatePaymentPin(newPin);
+        if (!pinVal.valid) {
+            setChangePinError(pinVal.error);
             return;
         }
 
-        if (cleanNew !== cleanConfirm) {
-            setChangePinError("PINs do not match. Please verify.");
+        const confirmVal = validateConfirmPin(newPin, confirmNewPin);
+        if (!confirmVal.valid) {
+            setChangePinError(confirmVal.error);
             return;
         }
 
         setSettingPin(true);
         try {
-            await API.post("/auth/set-pin", { pin: cleanNew }).catch(() =>
-                API.post("/payments/set-pin", { pin: cleanNew })
+            await API.post("/auth/set-pin", { pin: pinVal.value }).catch(() =>
+                API.post("/payments/set-pin", { pin: pinVal.value })
             );
             if (updateUser) {
                 updateUser({ has_pin: true });
             }
+            showToast("4-digit Security PIN saved successfully!", "success");
             setShowSetPinModal(false);
             setNewPin("");
             setConfirmNewPin("");
