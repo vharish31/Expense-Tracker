@@ -11,6 +11,7 @@ export function ToastProvider({ children }) {
 
         setToasts((prev) => [...prev, newToast]);
 
+        
         setTimeout(() => {
             setToasts((prev) => prev.filter((t) => t.id !== id));
         }, 4000);
