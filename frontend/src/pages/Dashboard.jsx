@@ -119,8 +119,8 @@ function Dashboard() {
             }
         });
 
-        if (tIncome === 0 && income > 0) tIncome = Math.round(income / 30);
-        if (tExpense === 0 && expense > 0) tExpense = Math.round(expense / 30);
+        if (tIncome === 0 && income > 0) tIncome = 0;
+        if (tExpense === 0 && expense > 0) tExpense = 0;
 
         // Based on card balance, the total balance in the dashboard updates automatically!
         const effectiveTotalBalance = cards.length > 0 ? totalCardBalance : (income - expense);
@@ -208,9 +208,7 @@ function Dashboard() {
             }
         });
 
-        const points = dayTotals.some((val) => val > 0)
-            ? dayTotals
-            : [20000, 32000, 24000, 28000, 36000, 22000, 39000];
+        const points = dayTotals;
 
         return {
             labels,
@@ -282,73 +280,36 @@ function Dashboard() {
         }
     }), []);
 
-    // Recent Transactions list matching screenshot
+    // Dynamic User Transactions (Only real corresponding user transaction data)
     const recentTxList = useMemo(() => {
-        if (transactions.length > 0) {
-            return transactions.slice(0, 4).map((t, idx) => {
-                const isExpense = t.type === "Expense";
-                const avatars = [
-                    "tx-avatar-orange bi-person-fill",
-                    "tx-avatar-purple bi-briefcase-fill",
-                    "tx-avatar-red bi-exclamation-circle-fill",
-                    "tx-avatar-teal bi-spotify"
-                ];
+        if (!transactions || transactions.length === 0) return [];
 
-                return {
-                    id: t.id,
-                    name: t.title,
-                    date: new Date(t.transaction_date).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric"
-                    }),
-                    amount: Number(t.amount),
-                    isExpense,
-                    statusLabel: isExpense ? `Sent ${formatINR(t.amount)}` : `Received ${formatINR(t.amount)}`,
-                    statusType: isExpense ? "sent" : "received",
-                    avatarClass: avatars[idx % avatars.length]
-                };
-            });
-        }
+        // Sort by date / id descending so newest user transactions appear first
+        const sorted = [...transactions].sort((a, b) => {
+            const d1 = new Date(a.transaction_date).getTime();
+            const d2 = new Date(b.transaction_date).getTime();
+            if (d1 !== d2) return d2 - d1;
+            return b.id - a.id;
+        });
 
-        return [
-            {
-                id: 1,
-                name: "Jhon A Branda",
-                date: "15 Jan 2026",
-                amount: 120,
-                statusLabel: "Sent ₹120.00",
-                statusType: "sent",
-                avatarClass: "tx-avatar-orange bi-person-fill"
-            },
-            {
-                id: 2,
-                name: "Askademia",
-                date: "15 Jan 2026",
-                amount: 5000,
-                statusLabel: "Received ₹5,000.00",
-                statusType: "received",
-                avatarClass: "tx-avatar-purple bi-briefcase-fill"
-            },
-            {
-                id: 3,
-                name: "Steven Smith",
-                date: "15 Jan 2026",
-                amount: 500,
-                statusLabel: "Pending ₹500.00",
-                statusType: "pending",
-                avatarClass: "tx-avatar-red bi-exclamation-circle-fill"
-            },
-            {
-                id: 4,
-                name: "Apple Podcast",
-                date: "15 Jan 2026",
-                amount: 12,
-                statusLabel: "Subscribe ₹12.00",
-                statusType: "sent",
-                avatarClass: "tx-avatar-teal bi-apple"
-            }
-        ];
+        return sorted.slice(0, 5).map((t) => {
+            const isExpense = t.type === "Expense";
+
+            return {
+                id: t.id,
+                name: t.title,
+                date: new Date(t.transaction_date).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric"
+                }),
+                amount: Number(t.amount),
+                isExpense,
+                statusLabel: isExpense ? `Sent ${formatINR(t.amount)}` : `Received ${formatINR(t.amount)}`,
+                statusType: isExpense ? "sent" : "received",
+                avatarClass: isExpense ? "tx-avatar-orange bi-arrow-up-right" : "tx-avatar-teal bi-arrow-down-left"
+            };
+        });
     }, [transactions]);
 
     async function handleQuickSubmit(e) {
@@ -564,23 +525,42 @@ function Dashboard() {
                             </Link>
                         </div>
 
-                        <div className="tx-list-modern">
-                            {recentTxList.map((tx) => (
-                                <div key={tx.id} className="tx-item-modern">
-                                    <div className={`tx-item-avatar ${tx.avatarClass}`}></div>
-                                    <div className="tx-item-info">
-                                        <span className="tx-item-title">{tx.name}</span>
-                                        <span className="tx-item-date">{tx.date}</span>
+                        {recentTxList.length > 0 ? (
+                            <div className="tx-list-modern">
+                                {recentTxList.map((tx) => (
+                                    <div key={tx.id} className="tx-item-modern">
+                                        <div className={`tx-item-avatar ${tx.avatarClass}`}></div>
+                                        <div className="tx-item-info">
+                                            <span className="tx-item-title">{tx.name}</span>
+                                            <span className="tx-item-date">{tx.date}</span>
+                                        </div>
+                                        <span className={`tx-status-pill ${tx.statusType}`}>
+                                            {tx.statusType === "sent" && <i className="bi bi-arrow-up-right me-1"></i>}
+                                            {tx.statusType === "received" && <i className="bi bi-check-circle-fill me-1"></i>}
+                                            {tx.statusLabel}
+                                        </span>
                                     </div>
-                                    <span className={`tx-status-pill ${tx.statusType}`}>
-                                        {tx.statusType === "sent" && <i className="bi bi-arrow-up-right me-1"></i>}
-                                        {tx.statusType === "received" && <i className="bi bi-check-circle-fill me-1"></i>}
-                                        {tx.statusType === "pending" && <i className="bi bi-exclamation-circle-fill me-1"></i>}
-                                        {tx.statusLabel}
-                                    </span>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-4 my-auto d-flex flex-column align-items-center justify-content-center">
+                                <div className="mb-2 text-muted opacity-50 fs-2">
+                                    <i className="bi bi-receipt"></i>
                                 </div>
-                            ))}
-                        </div>
+                                <div className="fw-bold text-dark mb-1" style={{ fontSize: "0.95rem" }}>
+                                    No Transactions Recorded Yet
+                                </div>
+                                <p className="text-muted small mb-3">Your financial debits and credits will appear here dynamically.</p>
+                                <button
+                                    className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 px-3 py-1"
+                                    style={{ borderRadius: "10px", fontWeight: 600, fontSize: "0.82rem" }}
+                                    onClick={() => setShowQuickModal(true)}
+                                >
+                                    <i className="bi bi-plus-lg"></i>
+                                    <span>Record First Entry</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
