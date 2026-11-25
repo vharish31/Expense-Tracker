@@ -402,7 +402,7 @@ function Payments() {
                 {/* Column 2: Account Snapshot & Quick Information */}
                 <div className="col-12 col-xl-5 col-lg-5">
                     {/* User's Sending Vault Card Preview */}
-                    <div className="official-card p-4 mb-4">
+                    <div className="official-card p-4">
                         <div className="d-flex justify-content-between align-items-center mb-3">
                             <span className="badge bg-light text-muted fw-bold px-2 py-1 rounded-pill">
                                 ACTIVE SOURCE VAULT
@@ -443,31 +443,6 @@ function Payments() {
                                 <strong className="text-primary">Instant Real-time</strong>
                             </div>
                         </div>
-                    </div>
-
-                    {/* How it works info */}
-                    <div className="official-card p-4">
-                        <h5 className="fw-bold mb-3" style={{ fontSize: "1rem" }}>
-                            <i className="bi bi-info-circle-fill text-primary me-2"></i> How P2P Payments Work
-                        </h5>
-                        <ul className="list-unstyled small text-muted mb-0 d-flex flex-column gap-2">
-                            <li className="d-flex gap-2">
-                                <i className="bi bi-check2 text-success fw-bold"></i>
-                                <span>Enter any registered user's 10-digit mobile number.</span>
-                            </li>
-                            <li className="d-flex gap-2">
-                                <i className="bi bi-check2 text-success fw-bold"></i>
-                                <span>Recipient's verified name is confirmed instantly.</span>
-                            </li>
-                            <li className="d-flex gap-2">
-                                <i className="bi bi-check2 text-success fw-bold"></i>
-                                <span>Funds are deducted from your card and <strong>automatically credited to the recipient's card balance</strong>.</span>
-                            </li>
-                            <li className="d-flex gap-2">
-                                <i className="bi bi-check2 text-success fw-bold"></i>
-                                <span>Both user passbooks record dynamic ledger entries with a matching UTR reference.</span>
-                            </li>
-                        </ul>
                     </div>
                 </div>
             </div>
