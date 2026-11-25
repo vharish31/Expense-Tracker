@@ -39,6 +39,10 @@ function Navbar({ onToggleSidebar, isSidebarOpen }) {
     const [loadingNotifs, setLoadingNotifs] = useState(false);
     const dropdownRef = useRef(null);
 
+    // User Profile Dropdown State
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const userDropdownRef = useRef(null);
+
     const todayFormatted = new Date().toLocaleDateString("en-IN", {
         day: "2-digit",
         month: "2-digit",
@@ -76,11 +80,14 @@ function Navbar({ onToggleSidebar, isSidebarOpen }) {
         };
     }, []);
 
-    // Close dropdown when clicking outside
+    // Close dropdowns when clicking outside
     useEffect(() => {
         function handleClickOutside(event) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setShowDropdown(false);
+            }
+            if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+                setShowUserDropdown(false);
             }
         }
         document.addEventListener("mousedown", handleClickOutside);
@@ -315,13 +322,58 @@ function Navbar({ onToggleSidebar, isSidebarOpen }) {
                     )}
                 </div>
 
-                {/* User Avatar */}
-                <div
-                    className="topbar-avatar-btn"
-                    onClick={logout}
-                    title={`${user?.name || "User"} (Click to sign out)`}
-                >
-                    {userInitial}
+                {/* User Avatar with Profile & Logout Dropdown */}
+                <div className="position-relative" ref={userDropdownRef}>
+                    <button
+                        type="button"
+                        className="topbar-avatar-btn"
+                        onClick={() => setShowUserDropdown((prev) => !prev)}
+                        title={`${user?.name || "User"} Account`}
+                        aria-expanded={showUserDropdown}
+                    >
+                        {userInitial}
+                    </button>
+
+                    {showUserDropdown && (
+                        <div className="topbar-user-dropdown-menu">
+                            {/* User Profile Info Header */}
+                            <div className="topbar-user-dropdown-header">
+                                <div className="d-flex align-items-center gap-2">
+                                    <div className="topbar-avatar-btn small-avatar">
+                                        {userInitial}
+                                    </div>
+                                    <div className="overflow-hidden">
+                                        <div className="fw-bold text-dark text-truncate" style={{ fontSize: "0.88rem" }}>
+                                            {user?.name || "User"}
+                                        </div>
+                                        <div className="text-muted text-truncate" style={{ fontSize: "0.74rem" }}>
+                                            {user?.email || "No email"}
+                                        </div>
+                                        {user?.phone && (
+                                            <div className="text-muted" style={{ fontSize: "0.72rem" }}>
+                                                <i className="bi bi-phone me-1"></i>{user.phone}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr className="my-1 border-light-subtle" />
+
+                            {/* Logout Action */}
+                            <button
+                                type="button"
+                                className="topbar-user-dropdown-item text-danger"
+                                onClick={() => {
+                                    setShowUserDropdown(false);
+                                    logout();
+                                }}
+                            >
+                                <i className="bi bi-box-arrow-right me-2"></i>
+                                <span>Log Out</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </header>
