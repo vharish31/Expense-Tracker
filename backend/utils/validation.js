@@ -61,7 +61,7 @@ function validateName(name) {
 /**
  * Email Validation
  * - Required
- * - Max length: 64 characters
+ * - Max length: 254 characters
  * - Local part max: 64 characters
  * - Exactly one @ symbol
  * - No whitespace
@@ -81,7 +81,7 @@ function validateEmail(email) {
     }
 
     const trimmed = email.trim();
-    if (trimmed.length === 0 || trimmed.length > 64) {
+    if (trimmed.length === 0 || trimmed.length > 254) {
         return { valid: false, error: "Please enter a valid email address." };
     }
 

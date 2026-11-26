@@ -173,6 +173,35 @@ function Register() {
         }
     }
 
+    // Physical keydown interceptor to guarantee input field strictly rejects typing beyond max limit
+    function handleKeyDownLimit(e, maxLength) {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        const isControlKey = [
+            "Backspace", "Delete", "Tab", "Enter", "Escape",
+            "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
+            "Home", "End", "PageUp", "PageDown"
+        ].includes(e.key);
+        if (isControlKey) return;
+
+        const input = e.target;
+        const hasSelection = input.selectionStart !== input.selectionEnd;
+        if (input.value && input.value.length >= maxLength && !hasSelection) {
+            e.preventDefault();
+        }
+    }
+
+    // Physical paste interceptor to prevent entering more than max length
+    function handlePasteLimit(e, field, maxLength) {
+        e.preventDefault();
+        const pasted = (e.clipboardData || window.clipboardData)?.getData("text") || "";
+        const input = e.target;
+        const start = input.selectionStart ?? 0;
+        const end = input.selectionEnd ?? 0;
+        const current = input.value || "";
+        const combined = current.slice(0, start) + pasted + current.slice(end);
+        handleChange(field, combined.slice(0, maxLength));
+    }
+
     // On blur validation with server-side email verification
     async function handleBlur(field) {
         setTouched((prev) => ({ ...prev, [field]: true }));
@@ -394,6 +423,8 @@ function Register() {
                                         required
                                         maxLength={50}
                                         value={form.name}
+                                        onKeyDown={(e) => handleKeyDownLimit(e, 50)}
+                                        onPaste={(e) => handlePasteLimit(e, "name", 50)}
                                         onChange={(e) => handleChange("name", e.target.value)}
                                         onBlur={() => handleBlur("name")}
                                         disabled={loading}
@@ -430,6 +461,8 @@ function Register() {
                                         required
                                         maxLength={254}
                                         value={form.email}
+                                        onKeyDown={(e) => handleKeyDownLimit(e, 254)}
+                                        onPaste={(e) => handlePasteLimit(e, "email", 254)}
                                         onChange={(e) => handleChange("email", e.target.value)}
                                         onBlur={() => handleBlur("email")}
                                         disabled={loading}
@@ -474,6 +507,8 @@ function Register() {
                                         required
                                         maxLength={10}
                                         value={form.phone}
+                                        onKeyDown={(e) => handleKeyDownLimit(e, 10)}
+                                        onPaste={(e) => handlePasteLimit(e, "phone", 10)}
                                         onChange={(e) => handleChange("phone", e.target.value)}
                                         onBlur={() => handleBlur("phone")}
                                         disabled={loading}
@@ -514,6 +549,8 @@ function Register() {
                                         required
                                         maxLength={64}
                                         value={form.password}
+                                        onKeyDown={(e) => handleKeyDownLimit(e, 64)}
+                                        onPaste={(e) => handlePasteLimit(e, "password", 64)}
                                         onChange={(e) => handleChange("password", e.target.value)}
                                         onBlur={() => handleBlur("password")}
                                         disabled={loading}
@@ -679,6 +716,8 @@ function Register() {
                                         required
                                         maxLength={64}
                                         value={form.confirmPassword}
+                                        onKeyDown={(e) => handleKeyDownLimit(e, 64)}
+                                        onPaste={(e) => handlePasteLimit(e, "confirmPassword", 64)}
                                         onChange={(e) => handleChange("confirmPassword", e.target.value)}
                                         onBlur={() => handleBlur("confirmPassword")}
                                         disabled={loading}
