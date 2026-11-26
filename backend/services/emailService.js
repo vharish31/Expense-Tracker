@@ -98,7 +98,7 @@ async function sendViaBrevo(toEmail, otp) {
     if (!brevoKey) return null;
 
     try {
-        const senderEmail = process.env.EMAIL_USER || "harishvp31@gmail.com";
+        const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.EMAIL_USER || "harishvp31@gmail.com";
         const senderName = "Expense Tracker";
 
         const response = await fetch("https://api.brevo.com/v3/smtp/email", {
