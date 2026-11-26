@@ -145,16 +145,24 @@ function validateMobile(phone) {
 }
 
 /**
- * Password Policy Validation
- * - Required
- * - Min 8, Max 64 characters
- * - Uppercase, lowercase, number, special character
- * - No spaces
- * - Rejects common weak passwords
+ * Reasonably Strong Password Policy Validation
+ * Rule             Validation
+ * Required         Yes
+ * Minimum length   8 characters
+ * Maximum length   64 characters
+ * Uppercase        At least 1
+ * Lowercase        At least 1
+ * Number           At least 1
+ * Special char     At least 1
+ * Spaces           Not allowed
  */
 function validatePassword(password) {
-    if (!password || typeof password !== "string") {
+    if (!password || typeof password !== "string" || password.length === 0) {
         return { valid: false, error: "Please enter your password." };
+    }
+
+    if (/\s/.test(password)) {
+        return { valid: false, error: "Password must not contain spaces." };
     }
 
     if (password.length < 8) {
@@ -165,24 +173,20 @@ function validatePassword(password) {
         return { valid: false, error: "Password must not exceed 64 characters." };
     }
 
-    if (/\s/.test(password)) {
-        return { valid: false, error: "Password must not contain spaces." };
+    if (!/[A-Z]/.test(password)) {
+        return { valid: false, error: "Password must include at least 1 uppercase letter." };
     }
 
-    const hasUpper = /[A-Z]/.test(password);
-    const hasLower = /[a-z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSpecial = /[!@#$%^&*(),.?":{}|<>\-_+=\[\]~`/\\]/.test(password);
-
-    if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
-        return { valid: false, error: "Please choose a stronger password." };
+    if (!/[a-z]/.test(password)) {
+        return { valid: false, error: "Password must include at least 1 lowercase letter." };
     }
 
-    const lower = password.toLowerCase();
-    const baseWord = lower.replace(/[0-9!@#$%^&*(),.?":{}|<>\-_+=\[\]~`/\\]+$/g, "");
+    if (!/[0-9]/.test(password)) {
+        return { valid: false, error: "Password must include at least 1 number." };
+    }
 
-    if (COMMON_PASSWORDS.has(lower) || (baseWord.length >= 4 && COMMON_PASSWORDS.has(baseWord))) {
-        return { valid: false, error: "Please choose a stronger password." };
+    if (!/[!@#$%^&*(),.?":{}|<>\-_+=\[\]~`\/\\;']/.test(password)) {
+        return { valid: false, error: "Password must include at least 1 special character." };
     }
 
     return { valid: true, value: password };

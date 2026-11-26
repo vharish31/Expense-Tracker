@@ -146,18 +146,24 @@ export function validateMobile(phone) {
 }
 
 /**
- * 4. Password Policy Validation
- * - Min 8, Max 64 chars
- * - At least 1 uppercase, 1 lowercase, 1 number, 1 special character
- * - No spaces allowed
- * - Reject common or weak passwords
- * Errors:
- * "Password must contain at least 8 characters."
- * "Please choose a stronger password."
+ * 4. Reasonably Strong Password Policy Validation
+ * Rule             Validation
+ * Required         Yes
+ * Minimum length   8 characters
+ * Maximum length   64 characters
+ * Uppercase        At least 1
+ * Lowercase        At least 1
+ * Number           At least 1
+ * Special char     At least 1
+ * Spaces           Not allowed
  */
 export function validatePassword(password) {
-    if (!password || typeof password !== "string" || password === "") {
+    if (!password || typeof password !== "string" || password.length === 0) {
         return { valid: false, error: "Please enter your password." };
+    }
+
+    if (/\s/.test(password)) {
+        return { valid: false, error: "Password must not contain spaces." };
     }
 
     if (password.length < 8) {
@@ -168,24 +174,20 @@ export function validatePassword(password) {
         return { valid: false, error: "Password must not exceed 64 characters." };
     }
 
-    if (/\s/.test(password)) {
-        return { valid: false, error: "Password must not contain spaces." };
+    if (!/[A-Z]/.test(password)) {
+        return { valid: false, error: "Password must include at least 1 uppercase letter." };
     }
 
-    const hasUpper = /[A-Z]/.test(password);
-    const hasLower = /[a-z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSpecial = /[!@#$%^&*(),.?":{}|<>\-_+=\[\]~`/\\]/.test(password);
-
-    if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
-        return { valid: false, error: "Please choose a stronger password." };
+    if (!/[a-z]/.test(password)) {
+        return { valid: false, error: "Password must include at least 1 lowercase letter." };
     }
 
-    const lower = password.toLowerCase();
-    const baseWord = lower.replace(/[0-9!@#$%^&*(),.?":{}|<>\-_+=\[\]~`/\\]+$/g, "");
+    if (!/[0-9]/.test(password)) {
+        return { valid: false, error: "Password must include at least 1 number." };
+    }
 
-    if (COMMON_PASSWORDS.has(lower) || (baseWord.length >= 4 && COMMON_PASSWORDS.has(baseWord))) {
-        return { valid: false, error: "Please choose a stronger password." };
+    if (!/[!@#$%^&*(),.?":{}|<>\-_+=\[\]~`\/\\;']/.test(password)) {
+        return { valid: false, error: "Password must include at least 1 special character." };
     }
 
     return { valid: true, error: "", value: password };
@@ -208,40 +210,86 @@ export function validateConfirmPassword(password, confirmPassword) {
 }
 
 /**
- * Password Strength Assessment
- * Levels: Weak, Medium, Strong
+ * Dynamic Password Strength Assessment according to policy rules:
+ * 1. Length (8-64 characters)
+ * 2. At least 1 uppercase letter
+ * 3. At least 1 lowercase letter
+ * 4. At least 1 number
+ * 5. At least 1 special character
+ * 6. No spaces allowed
+ * 
+ * Levels: Weak (0-40%), Medium (60-80%), Strong (100% - all rules satisfied)
  */
 export function getPasswordStrength(password) {
-    if (!password) {
-        return { score: 0, label: "", color: "#e2e8f0", percent: 0 };
+    if (!password || typeof password !== "string" || password.length === 0) {
+        return {
+            score: 0,
+            percent: 0,
+            level: "",
+            label: "",
+            color: "#E2E8F0",
+            rulesMet: 0,
+            rules: {
+                length: false,
+                upper: false,
+                lower: false,
+                number: false,
+                special: false,
+                noSpaces: true
+            }
+        };
     }
 
-    let score = 0;
-    const checks = {
-        length: password.length >= 8,
-        lengthGood: password.length >= 10,
-        upper: /[A-Z]/.test(password),
-        lower: /[a-z]/.test(password),
-        number: /[0-9]/.test(password),
-        special: /[!@#$%^&*(),.?":{}|<>\-_+=\[\]~`/\\]/.test(password),
-        noSpaces: !/\s/.test(password),
-        notCommon: !COMMON_PASSWORDS.has(password.toLowerCase())
+    const hasSpaces = /\s/.test(password);
+    const hasLength = password.length >= 8 && password.length <= 64;
+    const hasUpper = /[A-Z]/.test(password);
+    const hasLower = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>\-_+=\[\]~`\/\\;']/.test(password);
+
+    const rules = {
+        length: hasLength,
+        upper: hasUpper,
+        lower: hasLower,
+        number: hasNumber,
+        special: hasSpecial,
+        noSpaces: !hasSpaces
     };
 
-    if (checks.length) score += 1;
-    if (checks.lengthGood) score += 1;
-    if (checks.upper && checks.lower) score += 1;
-    if (checks.number) score += 1;
-    if (checks.special) score += 1;
-    if (checks.noSpaces && checks.notCommon) score += 1;
+    const rulesMet = [hasLength, hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
 
-    if (score <= 2) {
-        return { score: 1, label: "Weak", color: "#EF4444", percent: 33, checks };
-    } else if (score <= 4) {
-        return { score: 2, label: "Medium", color: "#F59E0B", percent: 66, checks };
-    } else {
-        return { score: 3, label: "Strong", color: "#10B981", percent: 100, checks };
+    // Percent progress (0 to 100%)
+    let percent = Math.round((rulesMet / 5) * 100);
+    if (hasSpaces) {
+        percent = Math.min(percent, 25);
     }
+
+    let level = "Weak";
+    let color = "#EF4444";
+
+    if (hasSpaces) {
+        level = "Weak";
+        color = "#EF4444";
+    } else if (rulesMet === 5) {
+        level = "Strong";
+        color = "#10B981";
+    } else if (rulesMet >= 3) {
+        level = "Medium";
+        color = "#F59E0B";
+    } else {
+        level = "Weak";
+        color = "#EF4444";
+    }
+
+    return {
+        score: percent, // For CSS width: `${passwordStrength.score}%`
+        percent: percent,
+        level: level,   // For level === "Strong"
+        label: level,   // For label compatibility
+        color: color,
+        rulesMet: rulesMet,
+        rules: rules
+    };
 }
 
 /**

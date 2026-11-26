@@ -536,7 +536,7 @@ function Register() {
                                     </div>
                                 )}
 
-                                {/* Password Strength Meter */}
+                                {/* Password Strength Meter & Policy Rules */}
                                 {form.password && (
                                     <div className="password-strength-container mt-2">
                                         <div className="d-flex justify-content-between align-items-center mb-1">
@@ -558,7 +558,7 @@ function Register() {
                                                 {passwordStrength.level}
                                             </span>
                                         </div>
-                                        <div className="progress" style={{ height: "4px" }}>
+                                        <div className="progress" style={{ height: "5px", backgroundColor: "#E2E8F0", borderRadius: "999px", overflow: "hidden" }}>
                                             <div
                                                 className={`progress-bar ${
                                                     passwordStrength.level === "Strong"
@@ -568,11 +568,84 @@ function Register() {
                                                         : "bg-danger"
                                                 }`}
                                                 role="progressbar"
-                                                style={{ width: `${passwordStrength.score}%` }}
+                                                style={{
+                                                    width: `${passwordStrength.score}%`,
+                                                    transition: "width 0.3s ease, background-color 0.3s ease"
+                                                }}
                                                 aria-valuenow={passwordStrength.score}
                                                 aria-valuemin="0"
                                                 aria-valuemax="100"
                                             ></div>
+                                        </div>
+
+                                        {/* Dynamic Policy Checklist according to validation rules */}
+                                        <div className="password-rules-badges mt-2 d-flex flex-wrap gap-1">
+                                            <span
+                                                className={`badge rounded-pill ${
+                                                    passwordStrength.rules?.length
+                                                        ? "bg-success-subtle text-success border border-success-subtle"
+                                                        : "bg-light text-muted border border-light-subtle"
+                                                }`}
+                                                style={{ fontSize: "0.68rem", fontWeight: 500 }}
+                                            >
+                                                <i className={`bi ${passwordStrength.rules?.length ? "bi-check2" : "bi-circle"} me-1`}></i>
+                                                8-64 chars
+                                            </span>
+                                            <span
+                                                className={`badge rounded-pill ${
+                                                    passwordStrength.rules?.upper
+                                                        ? "bg-success-subtle text-success border border-success-subtle"
+                                                        : "bg-light text-muted border border-light-subtle"
+                                                }`}
+                                                style={{ fontSize: "0.68rem", fontWeight: 500 }}
+                                            >
+                                                <i className={`bi ${passwordStrength.rules?.upper ? "bi-check2" : "bi-circle"} me-1`}></i>
+                                                1 uppercase
+                                            </span>
+                                            <span
+                                                className={`badge rounded-pill ${
+                                                    passwordStrength.rules?.lower
+                                                        ? "bg-success-subtle text-success border border-success-subtle"
+                                                        : "bg-light text-muted border border-light-subtle"
+                                                }`}
+                                                style={{ fontSize: "0.68rem", fontWeight: 500 }}
+                                            >
+                                                <i className={`bi ${passwordStrength.rules?.lower ? "bi-check2" : "bi-circle"} me-1`}></i>
+                                                1 lowercase
+                                            </span>
+                                            <span
+                                                className={`badge rounded-pill ${
+                                                    passwordStrength.rules?.number
+                                                        ? "bg-success-subtle text-success border border-success-subtle"
+                                                        : "bg-light text-muted border border-light-subtle"
+                                                }`}
+                                                style={{ fontSize: "0.68rem", fontWeight: 500 }}
+                                            >
+                                                <i className={`bi ${passwordStrength.rules?.number ? "bi-check2" : "bi-circle"} me-1`}></i>
+                                                1 number
+                                            </span>
+                                            <span
+                                                className={`badge rounded-pill ${
+                                                    passwordStrength.rules?.special
+                                                        ? "bg-success-subtle text-success border border-success-subtle"
+                                                        : "bg-light text-muted border border-light-subtle"
+                                                }`}
+                                                style={{ fontSize: "0.68rem", fontWeight: 500 }}
+                                            >
+                                                <i className={`bi ${passwordStrength.rules?.special ? "bi-check2" : "bi-circle"} me-1`}></i>
+                                                1 special char
+                                            </span>
+                                            <span
+                                                className={`badge rounded-pill ${
+                                                    passwordStrength.rules?.noSpaces
+                                                        ? "bg-success-subtle text-success border border-success-subtle"
+                                                        : "bg-danger-subtle text-danger border border-danger-subtle"
+                                                }`}
+                                                style={{ fontSize: "0.68rem", fontWeight: 500 }}
+                                            >
+                                                <i className={`bi ${passwordStrength.rules?.noSpaces ? "bi-check2" : "bi-x"} me-1`}></i>
+                                                no spaces
+                                            </span>
                                         </div>
                                     </div>
                                 )}
