@@ -85,7 +85,7 @@ exports.transferFunds = async (req, res) => {
 
         const numAmount = Number(amount);
         if (!Number.isFinite(numAmount) || numAmount <= 0) {
-            return res.status(400).json({ message: "Please enter a valid payment amount greater than zero" });
+            return res.status(400).json({ message: "Please enter a valid payment amount greater than zero. Money cannot be negative or zero." });
         }
 
         const cleanPhone = String(recipient_phone).replace(/\D/g, "").slice(-10);

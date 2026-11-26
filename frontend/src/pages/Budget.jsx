@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
-import { formatINR } from "../utils/currency";
+import { formatINR, preventNegativeInput, sanitizePositiveAmount } from "../utils/currency";
 
 function getMonthKey(date = new Date()) {
     const year = date.getFullYear();
@@ -66,11 +66,18 @@ function Budget() {
     const remainingBudget = totalBudget - totalSpent;
 
     function handleChange(e) {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        const sanitized = name === "amount" ? sanitizePositiveAmount(value) : value;
+        setFormData({ ...formData, [name]: sanitized });
     }
 
     async function handleSubmit(e) {
         e.preventDefault();
+        const numAmount = Number(formData.amount);
+        if (!Number.isFinite(numAmount) || numAmount <= 0) {
+            alert("Ceiling limit must be greater than ₹0.00. Money cannot be negative or zero.");
+            return;
+        }
         try {
             await API.post("/budgets", { ...formData, month: selectedMonth });
             setShowForm(false);
@@ -189,6 +196,7 @@ function Budget() {
                                         className="form-control-official border-start-0"
                                         placeholder="0.00"
                                         value={formData.amount}
+                                        onKeyDown={preventNegativeInput}
                                         onChange={handleChange}
                                         min="0.01"
                                         step="0.01"

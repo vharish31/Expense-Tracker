@@ -41,7 +41,7 @@ exports.addBudget = async (req, res) => {
         }
 
         if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) {
-            return res.status(400).json({ message: "Amount must be greater than zero" });
+            return res.status(400).json({ message: "Ceiling limit must be greater than zero. Money cannot be negative or zero." });
         }
 
         const result = await db.query(

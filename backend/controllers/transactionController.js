@@ -27,7 +27,7 @@ exports.addTransaction = async (req, res) => {
 
         const numAmount = Number(amount);
         if (!Number.isFinite(numAmount) || numAmount <= 0) {
-            return res.status(400).json({ message: "Amount must be greater than zero" });
+            return res.status(400).json({ message: "Amount must be greater than zero. Money cannot be negative or zero." });
         }
 
         // Fetch user's cards to compute card-based balance and update card balance
@@ -149,7 +149,7 @@ exports.updateTransaction = async (req, res) => {
         }
 
         if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) {
-            return res.status(400).json({ message: "Amount must be greater than zero" });
+            return res.status(400).json({ message: "Amount must be greater than zero. Money cannot be negative or zero." });
         }
 
         const transaction = await Transaction.updateById(

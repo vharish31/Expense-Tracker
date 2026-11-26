@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import API from "../services/api";
 import { useAuth } from "../context/auth";
 import { useToast } from "../components/Toast";
-import { formatINR } from "../utils/currency";
+import { formatINR, preventNegativeInput, sanitizePositiveAmount } from "../utils/currency";
 import { validatePaymentPin, validateConfirmPin } from "../utils/validation";
 
 function Payments() {
@@ -435,7 +435,8 @@ function Payments() {
                                         className="form-control-official border-start-0"
                                         placeholder="0.00"
                                         value={amount}
-                                        onChange={(e) => setAmount(e.target.value)}
+                                        onKeyDown={preventNegativeInput}
+                                        onChange={(e) => setAmount(sanitizePositiveAmount(e.target.value))}
                                         required
                                     />
                                 </div>

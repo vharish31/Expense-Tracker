@@ -14,7 +14,7 @@ import {
 import { Line } from "react-chartjs-2";
 import API from "../services/api";
 import { useAuth } from "../context/auth";
-import { formatINR } from "../utils/currency";
+import { formatINR, preventNegativeInput, sanitizePositiveAmount } from "../utils/currency";
 import { validatePaymentPin, validateConfirmPin } from "../utils/validation";
 import { useToast } from "../components/Toast";
 
@@ -168,6 +168,12 @@ function Dashboard() {
 
         if (cards.length >= 4) {
             alert("You can maintain a maximum of 4 vault cards. Please remove an existing vault to add a new one.");
+            return;
+        }
+
+        const numBalance = Number(cardForm.balance) || 0;
+        if (numBalance < 0) {
+            alert("Vault card balance cannot be negative.");
             return;
         }
 
@@ -358,6 +364,13 @@ function Dashboard() {
 
     async function handleQuickSubmit(e) {
         e.preventDefault();
+
+        // Enforce: Money cannot be negative or zero
+        const numAmount = Number(quickForm.amount);
+        if (!Number.isFinite(numAmount) || numAmount <= 0) {
+            alert("Please enter a valid amount greater than ₹0.00. Money cannot be negative or zero.");
+            return;
+        }
 
         // Enforce: Cannot debit money if balance is zero or insufficient
         if (quickForm.type === "Expense") {
@@ -680,12 +693,14 @@ function Dashboard() {
                                             <span className="input-group-text bg-light border-end-0 fw-bold">₹</span>
                                             <input
                                                 type="number"
+                                                min="0"
                                                 step="0.01"
                                                 className="form-control-official w-auto flex-1"
                                                 placeholder="50000.00"
                                                 required
                                                 value={cardForm.balance}
-                                                onChange={(e) => setCardForm({ ...cardForm, balance: e.target.value })}
+                                                onKeyDown={preventNegativeInput}
+                                                onChange={(e) => setCardForm({ ...cardForm, balance: sanitizePositiveAmount(e.target.value) })}
                                             />
                                         </div>
                                     </div>
@@ -913,12 +928,14 @@ function Dashboard() {
                                             <span className="input-group-text bg-light border-end-0 fw-bold">₹</span>
                                             <input
                                                 type="number"
+                                                min="0.01"
                                                 step="0.01"
                                                 className="form-control-official w-auto flex-1"
                                                 placeholder="0.00"
                                                 required
                                                 value={quickForm.amount}
-                                                onChange={(e) => setQuickForm({ ...quickForm, amount: e.target.value })}
+                                                onKeyDown={preventNegativeInput}
+                                                onChange={(e) => setQuickForm({ ...quickForm, amount: sanitizePositiveAmount(e.target.value) })}
                                             />
                                         </div>
                                     </div>

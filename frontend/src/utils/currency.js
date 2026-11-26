@@ -22,3 +22,25 @@ export function formatCompactINR(val) {
     }
     return `₹${num.toLocaleString("en-IN")}`;
 }
+
+/**
+ * Prevents typing negative sign (-) or exponential notation (e, E, +) in number inputs
+ */
+export function preventNegativeInput(e) {
+    if (e.key === "-" || e.key === "Minus" || e.key === "e" || e.key === "E" || e.key === "+") {
+        e.preventDefault();
+    }
+}
+
+/**
+ * Sanitizes monetary amounts so they can never be negative
+ */
+export function sanitizePositiveAmount(val) {
+    if (val === "" || val === undefined || val === null) return "";
+    const clean = String(val).replace(/[^0-9.]/g, "");
+    const parts = clean.split(".");
+    if (parts.length > 2) {
+        return parts[0] + "." + parts.slice(1).join("");
+    }
+    return clean;
+}

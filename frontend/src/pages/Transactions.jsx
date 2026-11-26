@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import API from "../services/api";
 import TransactionForm from "../components/TransactionForm";
 import TransactionList from "../components/TransactionList";
-import { formatINR } from "../utils/currency";
+import { formatINR, sanitizePositiveAmount } from "../utils/currency";
 import { useAuth } from "../context/auth";
 
 const emptyForm = {
@@ -171,7 +171,8 @@ function Transactions() {
 
     function handleChange(e) {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        const sanitizedValue = name === "amount" ? sanitizePositiveAmount(value) : value;
+        setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
     }
 
     function resetForm() {
@@ -181,6 +182,13 @@ function Transactions() {
 
     async function handleSubmit(e) {
         e.preventDefault();
+
+        // Enforce: Money cannot be negative or zero
+        const numAmount = Number(formData.amount);
+        if (!Number.isFinite(numAmount) || numAmount <= 0) {
+            alert("Please enter a valid amount greater than ₹0.00. Money cannot be negative or zero.");
+            return;
+        }
 
         // Enforce: Cannot debit money if balance is zero or insufficient
         if (formData.type === "Expense") {

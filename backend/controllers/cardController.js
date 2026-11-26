@@ -22,6 +22,13 @@ exports.addCard = async (req, res) => {
     try {
         const { card_name, card_network, card_number, balance, card_holder, expiry_date, theme } = req.body;
 
+        if (balance !== undefined && balance !== null) {
+            const numBal = Number(balance);
+            if (!Number.isFinite(numBal) || numBal < 0) {
+                return res.status(400).json({ message: "Card balance cannot be negative" });
+            }
+        }
+
         if (!card_name || !card_number) {
             return res.status(400).json({
                 message: "Card name and card number are required"
@@ -49,7 +56,12 @@ exports.addCard = async (req, res) => {
         const holder = card_holder || req.user.name || "CARD HOLDER";
         const expiry = expiry_date || "12/2028";
         const cardTheme = theme || "blue";
-        const cardBalance = Number(balance) || 0.00;
+        const cardBalance = balance !== undefined && balance !== null && balance !== "" ? Number(balance) : 0.00;
+        if (!Number.isFinite(cardBalance) || cardBalance < 0) {
+            return res.status(400).json({
+                message: "Vault card balance cannot be negative"
+            });
+        }
 
         const result = await db.query(
             `INSERT INTO cards (user_id, card_name, card_network, card_number, balance, card_holder, expiry_date, theme)
@@ -94,6 +106,13 @@ exports.deleteCard = async (req, res) => {
 exports.updateCard = async (req, res) => {
     try {
         const { card_name, card_network, card_number, balance, card_holder, expiry_date, theme } = req.body;
+
+        if (balance !== undefined && balance !== null) {
+            const numBal = Number(balance);
+            if (!Number.isFinite(numBal) || numBal < 0) {
+                return res.status(400).json({ message: "Card balance cannot be negative" });
+            }
+        }
 
         const result = await db.query(
             `UPDATE cards

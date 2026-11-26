@@ -1,3 +1,5 @@
+import { preventNegativeInput } from "../utils/currency";
+
 function TransactionForm({
     formData,
     netBalance = 0,
@@ -54,6 +56,7 @@ function TransactionForm({
                                 className="form-control-official border-start-0"
                                 placeholder="0.00"
                                 value={formData.amount}
+                                onKeyDown={preventNegativeInput}
                                 onChange={onChange}
                                 min="0.01"
                                 step="0.01"
