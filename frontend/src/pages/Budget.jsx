@@ -1,3 +1,17 @@
+/**
+ * ==============================================================================
+ * BUDGET CEILINGS (FEATURE DISABLED / COMMENTED OUT)
+ * ==============================================================================
+ * All code for the Budget Ceilings feature has been commented out below.
+ * To re-enable:
+ * 1. Uncomment the component implementation below.
+ * 2. Uncomment the route in frontend/src/App.jsx.
+ * 3. Uncomment the sidebar link in frontend/src/components/Sidebar.jsx.
+ * 4. Uncomment the API mount in backend/server.js.
+ * ==============================================================================
+ */
+
+/*
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import { formatINR, preventNegativeInput, sanitizePositiveAmount } from "../utils/currency";
@@ -50,13 +64,15 @@ function Budget() {
         }
     }
 
-    const spentInCategory = (categoryName) => {
+    const expenseCategories = categories.filter((c) => c.type === "Expense");
+
+    const spentInCategory = (cat) => {
         return transactions
             .filter(
                 (t) =>
-                    t.category === categoryName &&
                     t.type === "Expense" &&
-                    getMonthKey(new Date(t.transaction_date)) === selectedMonth
+                    t.category === cat &&
+                    t.transaction_date.slice(0, 7) === selectedMonth
             )
             .reduce((sum, t) => sum + Number(t.amount), 0);
     };
@@ -98,11 +114,9 @@ function Budget() {
         }
     }
 
-    const expenseCategories = categories.filter((c) => c.type === "Expense");
-
     if (loading) {
         return (
-            <div className="text-center py-5">
+            <div className="page-container text-center py-5">
                 <div className="spinner-border text-primary mb-3"></div>
                 <h5 className="fw-bold">Loading Budget Planning...</h5>
             </div>
@@ -111,51 +125,42 @@ function Budget() {
 
     return (
         <div className="page-container">
-            {/* Header */}
             <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
                 <div>
-                    <h2 className="fw-bold mb-1" style={{ fontSize: "1.5rem", letterSpacing: "-0.02em" }}>
+                    <h2 className="page-title mb-1">
+                        <i className="bi bi-piggy-bank text-primary me-2"></i>
                         Budget Ceilings & Allocations
                     </h2>
-                    <p className="text-muted mb-0" style={{ fontSize: "0.85rem" }}>
-                        Active Cycle: <strong>{getMonthLabel(selectedMonth)}</strong> &bull; Currency: <strong>INR (₹)</strong>
-                    </p>
+                    <p className="page-subtitle mb-0">Manage category expenditure limits and guardrails</p>
                 </div>
 
-                <div className="d-flex align-items-center gap-2">
+                <div className="d-flex gap-2">
                     <input
                         type="month"
-                        className="form-control-official w-auto"
+                        className="form-control-official"
                         value={selectedMonth}
                         onChange={(e) => setSelectedMonth(e.target.value)}
                     />
                     <button
-                        className="btn-official-primary"
+                        className="btn-official-primary text-nowrap"
                         onClick={() => setShowForm(!showForm)}
                     >
-                        <i className="bi bi-plus-lg"></i>
-                        <span>{showForm ? "Cancel" : "Set Ceiling"}</span>
+                        <i className={`bi bi-${showForm ? "dash" : "plus"}-lg me-1`}></i>
+                        {showForm ? "Close Form" : "Set Ceiling"}
                     </button>
                 </div>
             </div>
 
-            {/* KPI Cards */}
             <div className="row g-3 mb-4">
-                <div className="col-12 col-md-4">
-                    <div className="official-card p-4">
+                <div className="col-12 col-md-6">
+                    <div className="official-card p-3">
                         <span className="text-muted small fw-semibold">Total Monthly Budget</span>
                         <h3 className="fw-bold mt-1 mb-0 text-primary">{formatINR(totalBudget)}</h3>
                     </div>
                 </div>
-                <div className="col-12 col-md-4">
-                    <div className="official-card p-4">
-                        <span className="text-muted small fw-semibold">Disbursed Outflow</span>
-                        <h3 className="fw-bold mt-1 mb-0 text-danger">{formatINR(totalSpent)}</h3>
-                    </div>
-                </div>
-                <div className="col-12 col-md-4">
-                    <div className="official-card p-4">
-                        <span className="text-muted small fw-semibold">Unspent Cushion</span>
+                <div className="col-12 col-md-6">
+                    <div className="official-card p-3">
+                        <span className="text-muted small fw-semibold">Net Remaining Guardrail</span>
                         <h3 className={`fw-bold mt-1 mb-0 ${remainingBudget >= 0 ? "text-success" : "text-danger"}`}>
                             {formatINR(remainingBudget)}
                         </h3>
@@ -163,14 +168,13 @@ function Budget() {
                 </div>
             </div>
 
-            {/* Add Budget Allocation Form */}
             {showForm && (
                 <div className="official-card p-4 mb-4">
                     <h5 className="fw-bold mb-3" style={{ fontSize: "1.05rem" }}>Set Category Budget Ceiling</h5>
                     <form onSubmit={handleSubmit}>
-                        <div className="row g-3 align-items-end">
+                        <div className="row g-3">
                             <div className="col-12 col-md-5">
-                                <label className="form-label fw-semibold small text-muted">Expense Category</label>
+                                <label className="form-label fw-semibold small text-muted">Expenditure Category</label>
                                 <select
                                     name="category"
                                     className="form-select-official"
@@ -178,7 +182,7 @@ function Budget() {
                                     onChange={handleChange}
                                     required
                                 >
-                                    <option value="">Select category...</option>
+                                    <option value="">Select Target Category</option>
                                     {expenseCategories.map((cat) => (
                                         <option key={cat.id} value={cat.name}>
                                             {cat.name}
@@ -214,48 +218,36 @@ function Budget() {
                 </div>
             )}
 
-            {/* Budget Allocations Grid */}
             <div className="row g-3">
                 {budgets.map((b) => {
                     const spent = spentInCategory(b.category);
                     const rem = Number(b.amount) - spent;
-                    const percent = Math.min(100, (spent / Number(b.amount)) * 100);
+                    const pct = Math.min(100, Math.round((spent / Number(b.amount)) * 100)) || 0;
+                    const isExceeded = spent > Number(b.amount);
 
                     return (
-                        <div className="col-12 col-md-6 col-lg-4" key={b.id}>
+                        <div key={b.id} className="col-12 col-md-6 col-xl-4">
                             <div className="official-card p-3 h-100 d-flex flex-column justify-content-between">
                                 <div>
-                                    <div className="d-flex justify-content-between align-items-start mb-2">
-                                        <div>
-                                            <div className="fw-bold mb-0" style={{ fontSize: "1rem" }}>{b.category}</div>
-                                            <span className="text-muted small">{getMonthLabel(b.month)}</span>
-                                        </div>
+                                    <div className="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 className="fw-bold mb-0 text-dark" style={{ fontSize: "1rem" }}>
+                                            {b.category}
+                                        </h5>
                                         <button
-                                            className="btn btn-sm btn-outline-danger py-1 px-2"
+                                            className="btn btn-sm btn-link text-danger p-0 border-0"
                                             onClick={() => handleDelete(b.id)}
-                                            title="Delete Allocation"
+                                            title="Delete allocation"
                                         >
                                             <i className="bi bi-trash"></i>
                                         </button>
                                     </div>
 
-                                    {/* Progress */}
-                                    <div className="my-3">
-                                        <div className="d-flex justify-content-between mb-1 small">
-                                            <span className="text-muted">Utilization</span>
-                                            <span className={`fw-bold ${percent >= 100 ? "text-danger" : "text-body"}`}>
-                                                {percent.toFixed(0)}%
-                                            </span>
-                                        </div>
-                                        <div className="progress-official">
-                                            <div
-                                                className="progress-bar-official"
-                                                style={{
-                                                    width: `${percent}%`,
-                                                    backgroundColor: percent >= 100 ? "var(--color-danger)" : percent >= 80 ? "var(--color-warning)" : "var(--color-success)"
-                                                }}
-                                            ></div>
-                                        </div>
+                                    <div className="progress mb-2" style={{ height: "6px" }}>
+                                        <div
+                                            className={`progress-bar ${isExceeded ? "bg-danger" : pct > 80 ? "bg-warning" : "bg-primary"}`}
+                                            role="progressbar"
+                                            style={{ width: `${pct}%` }}
+                                        ></div>
                                     </div>
                                 </div>
 
@@ -298,5 +290,8 @@ function Budget() {
         </div>
     );
 }
+*/
 
-export default Budget;
+export default function Budget() {
+    return null;
+}

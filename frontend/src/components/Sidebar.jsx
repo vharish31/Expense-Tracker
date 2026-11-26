@@ -5,7 +5,7 @@ const navItems = [
     { name: "Dashboard", path: "/", icon: "bi-grid-fill", dot: true },
     { name: "Transactions", path: "/transactions", icon: "bi-receipt-cutoff" },
     { name: "Payments", path: "/payments", icon: "bi-send-fill" },
-    { name: "Budget Ceilings", path: "/budget", icon: "bi-piggy-bank-fill" },
+    // { name: "Budget Ceilings", path: "/budget", icon: "bi-piggy-bank-fill" },
     { name: "Financial Analytics", path: "/analytics", icon: "bi-graph-up-arrow" }
 ];
 

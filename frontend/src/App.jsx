@@ -5,7 +5,7 @@ import { ToastProvider } from "./components/Toast";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Analytics from "./pages/Analytics";
-import Budget from "./pages/Budget";
+// import Budget from "./pages/Budget";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -32,7 +32,7 @@ function App() {
                                 <Route path="/transactions" element={<Transactions />} />
                                 <Route path="/payments" element={<Payments />} />
                                 <Route path="/analytics" element={<Analytics />} />
-                                <Route path="/budget" element={<Budget />} />
+                                {/* <Route path="/budget" element={<Budget />} /> */}
                             </Route>
                             <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>

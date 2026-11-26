@@ -1,7 +1,14 @@
+/**
+ * ==============================================================================
+ * BUDGET CEILINGS ROUTES (FEATURE DISABLED / COMMENTED OUT)
+ * ==============================================================================
+ */
+
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
 
+/*
+const authMiddleware = require("../middleware/authMiddleware");
 const {
     getBudgets,
     getBudgetByMonth,
@@ -17,5 +24,6 @@ router.get("/month/:month", getBudgetByMonth);
 router.post("/", addBudget);
 router.put("/:id", updateBudget);
 router.delete("/:id", deleteBudget);
+*/
 
 module.exports = router;

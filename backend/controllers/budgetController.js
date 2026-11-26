@@ -1,3 +1,10 @@
+/**
+ * ==============================================================================
+ * BUDGET CEILINGS CONTROLLER (FEATURE DISABLED / COMMENTED OUT)
+ * ==============================================================================
+ */
+
+/*
 const db = require("../config/db");
 
 exports.getBudgets = async (req, res) => {
@@ -106,7 +113,7 @@ exports.deleteBudget = async (req, res) => {
             return res.status(404).json({ message: "Budget not found" });
         }
 
-        res.status(200).json({
+        res.json({
             message: "Budget deleted successfully",
             budget: result.rows[0]
         });
@@ -115,3 +122,6 @@ exports.deleteBudget = async (req, res) => {
         res.status(500).json({ message: "Error deleting budget" });
     }
 };
+*/
+
+module.exports = {};
