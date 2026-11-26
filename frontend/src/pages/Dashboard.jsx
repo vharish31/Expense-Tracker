@@ -15,6 +15,8 @@ import { Line } from "react-chartjs-2";
 import API from "../services/api";
 import { useAuth } from "../context/auth";
 import { formatINR } from "../utils/currency";
+import { validatePaymentPin, validateConfirmPin } from "../utils/validation";
+import { useToast } from "../components/Toast";
 
 ChartJS.register(
     CategoryScale,
@@ -35,7 +37,8 @@ const THEME_CLASSES = {
 };
 
 function Dashboard() {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
+    const { showToast } = useToast();
 
     const [transactions, setTransactions] = useState([]);
     const [cards, setCards] = useState([]);
@@ -47,6 +50,12 @@ function Dashboard() {
     const [showQuickModal, setShowQuickModal] = useState(false);
     const [showAddCardModal, setShowAddCardModal] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
+
+    // Vault PIN setup states
+    const [vaultPin, setVaultPin] = useState("");
+    const [confirmVaultPin, setConfirmVaultPin] = useState("");
+    const [vaultPinError, setVaultPinError] = useState("");
+    const [showVaultPin, setShowVaultPin] = useState(false);
 
     // Quick Transaction Form
     const [quickForm, setQuickForm] = useState({
@@ -155,10 +164,39 @@ function Dashboard() {
     // Handle Manual Add Card / Vault
     async function handleAddCardSubmit(e) {
         e.preventDefault();
+        setVaultPinError("");
+
         if (cards.length >= 4) {
             alert("You can maintain a maximum of 4 vault cards. Please remove an existing vault to add a new one.");
             return;
         }
+
+        // If user hasn't set a 4-digit security PIN yet, validate and set it now
+        if (!user?.has_pin) {
+            const pinVal = validatePaymentPin(vaultPin);
+            if (!pinVal.valid) {
+                setVaultPinError(pinVal.error);
+                return;
+            }
+            const confirmVal = validateConfirmPin(vaultPin, confirmVaultPin);
+            if (!confirmVal.valid) {
+                setVaultPinError(confirmVal.error);
+                return;
+            }
+
+            try {
+                await API.post("/auth/set-pin", { pin: pinVal.value }).catch(() =>
+                    API.post("/payments/set-pin", { pin: pinVal.value })
+                );
+                if (updateUser) {
+                    updateUser({ has_pin: true });
+                }
+            } catch (pinErr) {
+                setVaultPinError(pinErr.response?.data?.message || "Failed to set security PIN");
+                return;
+            }
+        }
+
         try {
             const res = await API.post("/cards", {
                 ...cardForm,
@@ -166,6 +204,9 @@ function Dashboard() {
             });
             setCards((prev) => [...prev, res.data.card]);
             setShowAddCardModal(false);
+            setVaultPin("");
+            setConfirmVaultPin("");
+            setVaultPinError("");
             setCardForm({
                 card_name: "",
                 card_network: "VISA",
@@ -175,6 +216,9 @@ function Dashboard() {
                 expiry_date: "05/2028",
                 theme: "blue"
             });
+            if (showToast) {
+                showToast("Vault card added successfully!", "success");
+            }
         } catch (err) {
             alert(err.response?.data?.message || "Failed to add vault");
         }
@@ -699,6 +743,77 @@ function Dashboard() {
                                             ))}
                                         </div>
                                     </div>
+                                    {/* Set 4-Digit Security PIN (Only if not set yet) */}
+                                    {!user?.has_pin && (
+                                        <div className="p-3 mb-2 rounded-3 border" style={{ backgroundColor: "#F8FAFC", borderColor: "#E2E8F0" }}>
+                                            <div className="d-flex align-items-center justify-content-between mb-1">
+                                                <div className="d-flex align-items-center gap-2">
+                                                    <i className="bi bi-shield-lock-fill text-primary"></i>
+                                                    <span className="small fw-bold text-dark">Set 4-Digit Security PIN</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-link p-0 text-muted"
+                                                    style={{ fontSize: "0.82rem" }}
+                                                    onClick={() => setShowVaultPin(!showVaultPin)}
+                                                    tabIndex="-1"
+                                                >
+                                                    <i className={`bi ${showVaultPin ? "bi-eye-slash" : "bi-eye"}`}></i>
+                                                </button>
+                                            </div>
+                                            <p className="text-muted small mb-2" style={{ fontSize: "0.74rem" }}>
+                                                Set a secret 4-digit PIN to authorize instant money transfers from your vault cards.
+                                            </p>
+
+                                            <div className="row g-2">
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold text-muted mb-1" style={{ fontSize: "0.74rem" }}>
+                                                        Enter 4-Digit PIN
+                                                    </label>
+                                                    <input
+                                                        type={showVaultPin ? "text" : "password"}
+                                                        inputMode="numeric"
+                                                        maxLength={4}
+                                                        placeholder="••••"
+                                                        required={!user?.has_pin}
+                                                        className="form-control-official w-100 text-center fw-bold"
+                                                        style={{ letterSpacing: "0.3em" }}
+                                                        value={vaultPin}
+                                                        onChange={(e) => {
+                                                            setVaultPin(e.target.value.replace(/\D/g, "").slice(0, 4));
+                                                            setVaultPinError("");
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="col-6">
+                                                    <label className="form-label small fw-bold text-muted mb-1" style={{ fontSize: "0.74rem" }}>
+                                                        Confirm PIN
+                                                    </label>
+                                                    <input
+                                                        type={showVaultPin ? "text" : "password"}
+                                                        inputMode="numeric"
+                                                        maxLength={4}
+                                                        placeholder="••••"
+                                                        required={!user?.has_pin}
+                                                        className="form-control-official w-100 text-center fw-bold"
+                                                        style={{ letterSpacing: "0.3em" }}
+                                                        value={confirmVaultPin}
+                                                        onChange={(e) => {
+                                                            setConfirmVaultPin(e.target.value.replace(/\D/g, "").slice(0, 4));
+                                                            setVaultPinError("");
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {vaultPinError && (
+                                                <div className="text-danger small mt-2 d-flex align-items-center gap-1" style={{ fontSize: "0.75rem" }}>
+                                                    <i className="bi bi-exclamation-circle-fill flex-shrink-0"></i>
+                                                    <span>{vaultPinError}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="modal-footer border-0 px-4 pb-4 pt-1">
                                     <button type="button" className="btn btn-light" onClick={() => setShowAddCardModal(false)}>

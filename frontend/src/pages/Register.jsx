@@ -8,9 +8,8 @@ import {
     validateEmail,
     validateMobile,
     validatePassword,
-    getPasswordStrength,
-    validatePaymentPin,
-    validateConfirmPin
+    validateConfirmPassword,
+    getPasswordStrength
 } from "../utils/validation";
 
 function Register() {
@@ -26,8 +25,7 @@ function Register() {
         email: "",
         phone: "",
         password: "",
-        pin: "",
-        confirmPin: ""
+        confirmPassword: ""
     });
 
     const [touched, setTouched] = useState({
@@ -35,8 +33,7 @@ function Register() {
         email: false,
         phone: false,
         password: false,
-        pin: false,
-        confirmPin: false
+        confirmPassword: false
     });
 
     const [errors, setErrors] = useState({
@@ -44,8 +41,7 @@ function Register() {
         email: "",
         phone: "",
         password: "",
-        pin: "",
-        confirmPin: ""
+        confirmPassword: ""
     });
 
     const [generalError, setGeneralError] = useState("");
@@ -53,10 +49,9 @@ function Register() {
     const [emailChecking, setEmailChecking] = useState(false);
     const [emailValidated, setEmailValidated] = useState(false);
 
-    // Password & PIN visibility toggles
+    // Password visibility toggles
     const [showPassword, setShowPassword] = useState(false);
-    const [showPin, setShowPin] = useState(false);
-    const [showConfirmPin, setShowConfirmPin] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // OTP Verification states
     const [otpCode, setOtpCode] = useState("");
@@ -126,13 +121,8 @@ function Register() {
                 if (!res.valid) error = res.error;
                 break;
             }
-            case "pin": {
-                const res = validatePaymentPin(value);
-                if (!res.valid) error = res.error;
-                break;
-            }
-            case "confirmPin": {
-                const res = validateConfirmPin(allFormValues.pin, value);
+            case "confirmPassword": {
+                const res = validateConfirmPassword(allFormValues.password, value);
                 if (!res.valid) error = res.error;
                 break;
             }
@@ -163,9 +153,9 @@ function Register() {
             validateField(field, value, nextForm);
         }
 
-        // If modifying pin and confirmPin was touched, recheck confirmPin
-        if (field === "pin" && touched.confirmPin) {
-            validateField("confirmPin", form.confirmPin, nextForm);
+        // If modifying password and confirmPassword was touched, recheck confirmPassword
+        if (field === "password" && touched.confirmPassword) {
+            validateField("confirmPassword", form.confirmPassword, nextForm);
         }
     }
 
@@ -206,8 +196,7 @@ function Register() {
             email: true,
             phone: true,
             password: true,
-            pin: true,
-            confirmPin: true
+            confirmPassword: true
         };
         setTouched(allTouched);
 
@@ -215,10 +204,9 @@ function Register() {
         const emailErr = validateField("email", form.email, form);
         const phoneErr = validateField("phone", form.phone, form);
         const passErr = validateField("password", form.password, form);
-        const pinErr = validateField("pin", form.pin, form);
-        const confirmPinErr = validateField("confirmPin", form.confirmPin, form);
+        const confirmPassErr = validateField("confirmPassword", form.confirmPassword, form);
 
-        if (nameErr || emailErr || phoneErr || passErr || pinErr || confirmPinErr) {
+        if (nameErr || emailErr || phoneErr || passErr || confirmPassErr) {
             showToast("Please correct the errors in the form before submitting.", "error");
             return;
         }
@@ -324,8 +312,7 @@ function Register() {
                 name: form.name.trim().replace(/\s+/g, " "),
                 email: cleanEmail,
                 phone: form.phone.replace(/[\s\-()]/g, ""),
-                password: form.password,
-                pin: form.pin.trim()
+                password: form.password
             });
 
             showToast("Account created successfully! Welcome to Expense Tracker.", "success");
@@ -651,112 +638,52 @@ function Register() {
                                 )}
                             </div>
 
-                            {/* 5. 4-Digit Payment Security PIN */}
-                            <div className="mb-3">
-                                <label className="form-label small fw-bold text-muted mb-1">
-                                    Set 4-Digit Payment PIN
-                                </label>
-                                <div
-                                    className={`input-group input-group-auth ${
-                                        isInvalid("pin") ? "is-invalid" : isValid("pin") ? "is-valid" : ""
-                                    }`}
-                                >
-                                    <span className="input-group-text auth-input-icon">
-                                        <i className="bi bi-key"></i>
-                                    </span>
-                                    <input
-                                        type={showPin ? "text" : "password"}
-                                        className="form-control auth-input-field"
-                                        placeholder="••••"
-                                        required
-                                        maxLength={4}
-                                        inputMode="numeric"
-                                        value={form.pin}
-                                        onChange={(e) => {
-                                            const val = e.target.value.replace(/\D/g, "").slice(0, 4);
-                                            handleChange("pin", val);
-                                        }}
-                                        onBlur={() => handleBlur("pin")}
-                                        disabled={loading}
-                                    />
-                                    {isValid("pin") && (
-                                        <span className="auth-valid-icon" title="Valid PIN">
-                                            <i className="bi bi-check-circle-fill"></i>
-                                        </span>
-                                    )}
-                                    <button
-                                        type="button"
-                                        className="btn auth-input-toggle"
-                                        onClick={() => setShowPin(!showPin)}
-                                        title={showPin ? "Hide PIN" : "Show PIN"}
-                                        tabIndex="-1"
-                                    >
-                                        <i className={`bi ${showPin ? "bi-eye-slash" : "bi-eye"}`}></i>
-                                    </button>
-                                </div>
-                                {isInvalid("pin") ? (
-                                    <div className="auth-field-error">
-                                        <i className="bi bi-exclamation-circle-fill"></i>
-                                        <span>{errors.pin}</span>
-                                    </div>
-                                ) : (
-                                    <small className="text-muted d-block mt-1" style={{ fontSize: "0.74rem" }}>
-                                        4 numeric digits. Avoid simple sequences (1234) or repeated digits (1111).
-                                    </small>
-                                )}
-                            </div>
-
-                            {/* 6. Confirm 4-Digit Security PIN */}
+                            {/* 5. Confirm Password */}
                             <div className="mb-4">
                                 <label className="form-label small fw-bold text-muted mb-1">
-                                    Confirm 4-Digit Payment PIN
+                                    Confirm Password
                                 </label>
                                 <div
                                     className={`input-group input-group-auth ${
-                                        isInvalid("confirmPin")
+                                        isInvalid("confirmPassword")
                                             ? "is-invalid"
-                                            : isValid("confirmPin")
+                                            : isValid("confirmPassword")
                                             ? "is-valid"
                                             : ""
                                     }`}
                                 >
                                     <span className="input-group-text auth-input-icon">
-                                        <i className="bi bi-key"></i>
+                                        <i className="bi bi-shield-check"></i>
                                     </span>
                                     <input
-                                        type={showConfirmPin ? "text" : "password"}
+                                        type={showConfirmPassword ? "text" : "password"}
                                         className="form-control auth-input-field"
-                                        placeholder="••••"
+                                        placeholder="Confirm your password"
                                         required
-                                        maxLength={4}
-                                        inputMode="numeric"
-                                        value={form.confirmPin}
-                                        onChange={(e) => {
-                                            const val = e.target.value.replace(/\D/g, "").slice(0, 4);
-                                            handleChange("confirmPin", val);
-                                        }}
-                                        onBlur={() => handleBlur("confirmPin")}
+                                        value={form.confirmPassword}
+                                        onChange={(e) => handleChange("confirmPassword", e.target.value)}
+                                        onBlur={() => handleBlur("confirmPassword")}
                                         disabled={loading}
                                     />
-                                    {isValid("confirmPin") && (
-                                        <span className="auth-valid-icon" title="PINs match">
+                                    {isValid("confirmPassword") && (
+                                        <span className="auth-valid-icon" title="Passwords match">
                                             <i className="bi bi-check-circle-fill"></i>
                                         </span>
                                     )}
                                     <button
                                         type="button"
                                         className="btn auth-input-toggle"
-                                        onClick={() => setShowConfirmPin(!showConfirmPin)}
-                                        title={showConfirmPin ? "Hide PIN" : "Show PIN"}
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        title={showConfirmPassword ? "Hide password" : "Show password"}
                                         tabIndex="-1"
                                     >
-                                        <i className={`bi ${showConfirmPin ? "bi-eye-slash" : "bi-eye"}`}></i>
+                                        <i className={`bi ${showConfirmPassword ? "bi-eye-slash" : "bi-eye"}`}></i>
                                     </button>
                                 </div>
-                                {isInvalid("confirmPin") && (
+                                {isInvalid("confirmPassword") && (
                                     <div className="auth-field-error">
                                         <i className="bi bi-exclamation-circle-fill"></i>
-                                        <span>{errors.confirmPin}</span>
+                                        <span>{errors.confirmPassword}</span>
                                     </div>
                                 )}
                             </div>
