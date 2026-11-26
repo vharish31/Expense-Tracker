@@ -19,32 +19,46 @@ export const PREDICTABLE_PINS = new Set([
 ]);
 
 /**
- * 1. Full Name Validation
- * - Required
- * - Min 3, Max 50 characters
- * - Unicode letter support
- * - Allows single spaces between words
- * - Rejects numbers, hyphens, apostrophes, and punctuation
- * Error: "Please enter a valid full name"
+ * 1. Name Validation
+ * Rule                Validation
+ * Required            Cannot be empty
+ * Minimum length      3 characters
+ * Maximum length      50 characters
+ * Allowed characters  Letters and spaces
+ * Numbers             Not allowed
+ * Special characters  Not allowed, except spaces
+ * Spaces              No leading or trailing spaces
  */
 export function validateName(name) {
-    if (!name || typeof name !== "string") {
-        return { valid: false, error: "Please enter a valid full name" };
+    if (!name || typeof name !== "string" || name.length === 0) {
+        return { valid: false, error: "Please enter your name." };
     }
 
-    const trimmed = name.trim();
-    const normalized = trimmed.replace(/\s+/g, " ");
-
-    if (normalized.length < 3 || normalized.length > 50) {
-        return { valid: false, error: "Please enter a valid full name" };
+    if (name.startsWith(" ") || name.endsWith(" ")) {
+        return { valid: false, error: "Name cannot start or end with a space." };
     }
 
-    const nameRegex = /^[\p{L}\p{M}]+(?: [\p{L}\p{M}]+)*$/u;
-    if (!nameRegex.test(normalized)) {
-        return { valid: false, error: "Please enter a valid full name" };
+    if (/[0-9]/.test(name)) {
+        return { valid: false, error: "Numbers are not allowed in name." };
     }
 
-    return { valid: true, error: "", value: normalized };
+    if (/[^a-zA-Z\s]/.test(name)) {
+        return { valid: false, error: "Special characters are not allowed in name." };
+    }
+
+    if (!/^[a-zA-Z\s]+$/.test(name)) {
+        return { valid: false, error: "Name can only contain letters and spaces." };
+    }
+
+    if (name.length < 3) {
+        return { valid: false, error: "Name must contain at least 3 characters." };
+    }
+
+    if (name.length > 50) {
+        return { valid: false, error: "Name must not exceed 50 characters." };
+    }
+
+    return { valid: true, error: "", value: name.replace(/\s+/g, " ") };
 }
 
 /**
@@ -121,25 +135,38 @@ export function validateEmail(email) {
 }
 
 /**
- * 3. Mobile Number Validation (Indian)
- * - Required
- * - Exactly 10 digits
- * - Starts with 6, 7, 8, or 9
- * - Normalizes spaces, hyphens, +91 prefix
- * Error: "Enter a valid 10-digit Indian mobile number."
+ * 3. Mobile Number Validation (India)
+ * Rule         Validation
+ * Required     Yes
+ * Length       Exactly 10 digits
+ * First digit  6, 7, 8, or 9
+ * Letters      Not allowed
  */
 export function validateMobile(phone) {
-    if (!phone || (typeof phone !== "string" && typeof phone !== "number")) {
-        return { valid: false, error: "Enter a valid 10-digit Indian mobile number." };
+    if (phone === undefined || phone === null || String(phone).trim() === "") {
+        return { valid: false, error: "Please enter your mobile number." };
     }
 
-    let clean = String(phone).replace(/[\s\-()]/g, "");
+    const rawStr = String(phone);
+    if (/[a-zA-Z]/.test(rawStr)) {
+        return { valid: false, error: "Letters are not allowed in mobile number." };
+    }
+
+    let clean = rawStr.trim().replace(/[\s\-()]/g, "");
     if (clean.startsWith("+91")) clean = clean.slice(3);
     else if (clean.startsWith("91") && clean.length === 12) clean = clean.slice(2);
     else if (clean.startsWith("0") && clean.length === 11) clean = clean.slice(1);
 
-    if (clean.length !== 10 || !/^[6-9]\d{9}$/.test(clean)) {
-        return { valid: false, error: "Enter a valid 10-digit Indian mobile number." };
+    if (/\D/.test(clean)) {
+        return { valid: false, error: "Letters and special characters are not allowed in mobile number." };
+    }
+
+    if (clean.length !== 10) {
+        return { valid: false, error: "Mobile number must be exactly 10 digits." };
+    }
+
+    if (!/^[6-9]/.test(clean)) {
+        return { valid: false, error: "Mobile number must start with 6, 7, 8, or 9." };
     }
 
     return { valid: true, error: "", value: clean };

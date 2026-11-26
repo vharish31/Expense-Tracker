@@ -134,7 +134,21 @@ function Register() {
         return error;
     }
 
-    function handleChange(field, value) {
+    function handleChange(field, rawValue) {
+        let value = rawValue;
+
+        // Enforce maximum length constraints - inputs will not accept characters beyond maximum length
+        if (field === "name") {
+            value = value.slice(0, 50);
+        } else if (field === "phone") {
+            // Strictly numeric digits, exactly max 10 digits
+            value = value.replace(/\D/g, "").slice(0, 10);
+        } else if (field === "email") {
+            value = value.slice(0, 254);
+        } else if (field === "password" || field === "confirmPassword") {
+            value = value.slice(0, 64);
+        }
+
         const nextForm = { ...form, [field]: value };
         setForm(nextForm);
         setGeneralError("");
@@ -378,6 +392,7 @@ function Register() {
                                         className="form-control auth-input-field"
                                         placeholder="Enter your full name"
                                         required
+                                        maxLength={50}
                                         value={form.name}
                                         onChange={(e) => handleChange("name", e.target.value)}
                                         onBlur={() => handleBlur("name")}
@@ -413,6 +428,7 @@ function Register() {
                                         className="form-control auth-input-field"
                                         placeholder="Enter your email address"
                                         required
+                                        maxLength={254}
                                         value={form.email}
                                         onChange={(e) => handleChange("email", e.target.value)}
                                         onBlur={() => handleBlur("email")}
@@ -456,7 +472,7 @@ function Register() {
                                         className="form-control auth-input-field ps-1"
                                         placeholder="10-digit mobile number"
                                         required
-                                        maxLength={14}
+                                        maxLength={10}
                                         value={form.phone}
                                         onChange={(e) => handleChange("phone", e.target.value)}
                                         onBlur={() => handleBlur("phone")}
@@ -496,6 +512,7 @@ function Register() {
                                         className="form-control auth-input-field"
                                         placeholder="Choose a strong password"
                                         required
+                                        maxLength={64}
                                         value={form.password}
                                         onChange={(e) => handleChange("password", e.target.value)}
                                         onBlur={() => handleBlur("password")}
@@ -660,6 +677,7 @@ function Register() {
                                         className="form-control auth-input-field"
                                         placeholder="Confirm your password"
                                         required
+                                        maxLength={64}
                                         value={form.confirmPassword}
                                         onChange={(e) => handleChange("confirmPassword", e.target.value)}
                                         onBlur={() => handleBlur("confirmPassword")}

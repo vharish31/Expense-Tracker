@@ -44,7 +44,14 @@ function Login() {
         return error;
     }
 
-    function handleChange(field, value) {
+    function handleChange(field, rawValue) {
+        let value = rawValue;
+        if (field === "email") {
+            value = value.slice(0, 254);
+        } else if (field === "password") {
+            value = value.slice(0, 64);
+        }
+
         setForm((prev) => ({ ...prev, [field]: value }));
         setGeneralError("");
 
@@ -144,6 +151,7 @@ function Login() {
                                 className="form-control auth-input-field"
                                 placeholder="Enter your email"
                                 required
+                                maxLength={254}
                                 value={form.email}
                                 onChange={(e) => handleChange("email", e.target.value)}
                                 onBlur={() => handleBlur("email")}
@@ -190,6 +198,7 @@ function Login() {
                                 className="form-control auth-input-field"
                                 placeholder="Enter your password"
                                 required
+                                maxLength={64}
                                 value={form.password}
                                 onChange={(e) => handleChange("password", e.target.value)}
                                 onBlur={() => handleBlur("password")}
