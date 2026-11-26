@@ -2,7 +2,7 @@ const nodemailer = require("nodemailer");
 
 /**
  * Configure Nodemailer Transporter using environment variables.
- * Safe fallback: If SMTP is unconfigured or fails, logs the OTP clearly to console.
+ * Uses IPv4 (family: 4) to prevent IPv6 routing timeouts on cloud platforms like Render.
  */
 let transporter = null;
 
@@ -11,7 +11,6 @@ function getTransporter() {
 
     const user = process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : "";
     const rawPass = process.env.EMAIL_PASSWORD ? process.env.EMAIL_PASSWORD.trim() : "";
-    // Google App Passwords often have spaces like "abcd efgh ijkl mnop"
     const pass = rawPass.replace(/\s+/g, "");
 
     if (!user || !pass) {
@@ -19,32 +18,22 @@ function getTransporter() {
     }
 
     const host = (process.env.EMAIL_HOST || "smtp.gmail.com").trim().toLowerCase();
-    const port = parseInt(process.env.EMAIL_PORT, 10) || (host.includes("gmail") ? 465 : 587);
+    const port = parseInt(process.env.EMAIL_PORT, 10) || 465;
+    const isGmail = host.includes("gmail");
 
-    // If host is Gmail, use nodemailer's built-in 'gmail' service to avoid port/TLS misconfigurations
-    if (host.includes("gmail")) {
-        transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: { user, pass },
-            connectionTimeout: 8000, // 8s connection timeout
-            greetingTimeout: 8000,
-            socketTimeout: 10000
-        });
-    } else {
-        const secure = port === 465 || process.env.EMAIL_SECURE === "true";
-        transporter = nodemailer.createTransport({
-            host,
-            port,
-            secure,
-            auth: { user, pass },
-            connectionTimeout: 8000,
-            greetingTimeout: 8000,
-            socketTimeout: 10000,
-            tls: {
-                rejectUnauthorized: false
-            }
-        });
-    }
+    transporter = nodemailer.createTransport({
+        host: isGmail ? "smtp.gmail.com" : host,
+        port: port,
+        secure: port === 465,
+        family: 4, // CRITICAL: Forces IPv4 to eliminate IPv6 network delays/hangs on Render
+        auth: { user, pass },
+        connectionTimeout: 15000, // 15s connection timeout
+        greetingTimeout: 15000,
+        socketTimeout: 15000,
+        tls: {
+            rejectUnauthorized: false
+        }
+    });
 
     return transporter;
 }
@@ -102,67 +91,105 @@ function generateOTPEmailHtml(otp, expiryMinutes = 5) {
 }
 
 /**
- * Send 6-digit OTP to the user's email address with hard timeout safeguard.
- * Supports:
- * 1. Resend HTTP API (if RESEND_API_KEY is provided - recommended on Render because port 443 is never blocked)
- * 2. Nodemailer SMTP (Gmail, custom SMTP)
- * 3. Safe console fallback if network/SMTP connection fails
+ * Send email via Brevo HTTP API (Port 443 HTTPS - No recipient restrictions!)
  */
-async function sendOTPEmail(toEmail, otp) {
-    const resendKey = process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.trim() : null;
+async function sendViaBrevo(toEmail, otp) {
+    const brevoKey = process.env.BREVO_API_KEY ? process.env.BREVO_API_KEY.trim() : null;
+    if (!brevoKey) return null;
 
-    // Strategy 1: Resend HTTP API (Fast, reliable, bypasses Render SMTP port blocks)
-    if (resendKey) {
-        try {
-            // For Resend: Unless a verified custom domain is explicitly given in RESEND_FROM,
-            // always use Resend's official sandbox sender 'onboarding@resend.dev'
-            let fromAddress = "Expense Tracker <onboarding@resend.dev>";
-            if (process.env.RESEND_FROM) {
-                fromAddress = process.env.RESEND_FROM;
-            } else if (
-                process.env.EMAIL_FROM &&
-                !process.env.EMAIL_FROM.includes("@gmail.com") &&
-                !process.env.EMAIL_FROM.includes("@yahoo.") &&
-                !process.env.EMAIL_FROM.includes("@hotmail.") &&
-                !process.env.EMAIL_FROM.includes("@outlook.")
-            ) {
-                fromAddress = process.env.EMAIL_FROM;
-            }
+    try {
+        const senderEmail = process.env.EMAIL_USER || "harishvp31@gmail.com";
+        const senderName = "Expense Tracker";
 
-            const response = await fetch("https://api.resend.com/emails", {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${resendKey}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    from: fromAddress,
-                    to: [toEmail],
-                    subject: `${otp} is your Expense Tracker verification code`,
-                    text: `Your Expense Tracker verification code is: ${otp}\n\nThis code will expire in 5 minutes. Do not share this code with anyone.`,
-                    html: generateOTPEmailHtml(otp, 5)
-                })
-            });
+        const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+            method: "POST",
+            headers: {
+                "api-key": brevoKey,
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify({
+                sender: { name: senderName, email: senderEmail },
+                to: [{ email: toEmail }],
+                subject: `${otp} is your Expense Tracker verification code`,
+                htmlContent: generateOTPEmailHtml(otp, 5),
+                textContent: `Your Expense Tracker verification code is: ${otp}\n\nThis code will expire in 5 minutes. Do not share this code with anyone.`
+            })
+        });
 
-            const data = await response.json();
-            if (response.ok && data.id) {
-                console.log(`[Email Service] Verification OTP email sent via Resend to ${toEmail} (Id: ${data.id})`);
-                return { sent: true, mode: "resend", messageId: data.id };
-            } else {
-                console.error(`[Email Service] Resend API error:`, data);
-                console.log("\n=======================================================");
-                console.log(`[EMAIL FALLBACK] OTP for ${toEmail}: >>> ${otp} <<<`);
-                console.log(`Reason for fallback: Resend API ${data.message || JSON.stringify(data)}`);
-                console.log("=======================================================\n");
-                return { sent: true, mode: "fallback_console", warning: data.message };
-            }
-        } catch (resendErr) {
-            console.error(`[Email Service] Resend API network error:`, resendErr.message);
-            return { sent: true, mode: "fallback_console", warning: resendErr.message };
+        const data = await response.json();
+        if (response.ok && (data.messageId || data.messageIds)) {
+            const id = data.messageId || (data.messageIds && data.messageIds[0]);
+            console.log(`[Email Service] Verification OTP email sent via Brevo to ${toEmail} (Id: ${id})`);
+            return { sent: true, mode: "brevo", messageId: id };
+        } else {
+            console.error(`[Email Service] Brevo API error:`, data);
+            return null;
         }
+    } catch (err) {
+        console.error(`[Email Service] Brevo network error:`, err.message);
+        return null;
     }
+}
 
-    // Strategy 2: Nodemailer SMTP
+/**
+ * Send email via Resend HTTP API
+ */
+async function sendViaResend(toEmail, otp) {
+    const resendKey = process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.trim() : null;
+    if (!resendKey) return null;
+
+    try {
+        let fromAddress = "Expense Tracker <onboarding@resend.dev>";
+        if (process.env.RESEND_FROM) {
+            fromAddress = process.env.RESEND_FROM;
+        } else if (
+            process.env.EMAIL_FROM &&
+            !process.env.EMAIL_FROM.includes("@gmail.com") &&
+            !process.env.EMAIL_FROM.includes("@yahoo.") &&
+            !process.env.EMAIL_FROM.includes("@hotmail.") &&
+            !process.env.EMAIL_FROM.includes("@outlook.")
+        ) {
+            fromAddress = process.env.EMAIL_FROM;
+        }
+
+        const response = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${resendKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                from: fromAddress,
+                to: [toEmail],
+                subject: `${otp} is your Expense Tracker verification code`,
+                text: `Your Expense Tracker verification code is: ${otp}\n\nThis code will expire in 5 minutes. Do not share this code with anyone.`,
+                html: generateOTPEmailHtml(otp, 5)
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.id) {
+            console.log(`[Email Service] Verification OTP email sent via Resend to ${toEmail} (Id: ${data.id})`);
+            return { sent: true, mode: "resend", messageId: data.id };
+        } else {
+            console.warn(`[Email Service] Resend API error (${data.name || "error"}):`, data.message);
+            // Return null so it cascades seamlessly to Brevo or Gmail SMTP
+            return null;
+        }
+    } catch (err) {
+        console.warn(`[Email Service] Resend network error:`, err.message);
+        return null;
+    }
+}
+
+/**
+ * Send email via Nodemailer SMTP with IPv4 and direct TLS
+ */
+async function sendViaSMTP(toEmail, otp) {
+    const client = getTransporter();
+    if (!client) return null;
+
     const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER || '"Expense Tracker" <no-reply@expensetracker.com>';
     const mailOptions = {
         from: fromAddress,
@@ -172,38 +199,48 @@ async function sendOTPEmail(toEmail, otp) {
         html: generateOTPEmailHtml(otp, 5)
     };
 
-    const client = getTransporter();
+    try {
+        const sendPromise = client.sendMail(mailOptions);
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("SMTP connection timed out after 14 seconds")), 14000)
+        );
 
-    if (client) {
-        try {
-            // Strict 9-second timeout safeguard so the HTTP request never hangs
-            const sendPromise = client.sendMail(mailOptions);
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("SMTP connection timed out after 9 seconds")), 9000)
-            );
-
-            const info = await Promise.race([sendPromise, timeoutPromise]);
-            console.log(`[Email Service] Verification OTP email sent to ${toEmail} (MessageId: ${info.messageId})`);
-            return { sent: true, mode: "smtp", messageId: info.messageId };
-        } catch (error) {
-            console.error(`[Email Service] Failed to send email via SMTP:`, error.message);
-            // Log fallback to console so user can check Render logs and testing is never blocked
-            console.log("\n=======================================================");
-            console.log(`[EMAIL FALLBACK] OTP for ${toEmail}: >>> ${otp} <<<`);
-            console.log(`Reason for fallback: ${error.message}`);
-            console.log("=======================================================\n");
-            return { sent: true, mode: "fallback_console", warning: error.message };
-        }
-    } else {
-        // SMTP not configured - log clearly in dev console
-        console.log("\n=======================================================");
-        console.log(`[EMAIL DEV MODE] SMTP unconfigured. Verification code:`);
-        console.log(`Recipient: ${toEmail}`);
-        console.log(`OTP Code : >>> ${otp} <<<`);
-        console.log(`Expires  : in 5 minutes`);
-        console.log("=======================================================\n");
-        return { sent: true, mode: "console" };
+        const info = await Promise.race([sendPromise, timeoutPromise]);
+        console.log(`[Email Service] Verification OTP email sent via SMTP to ${toEmail} (MessageId: ${info.messageId})`);
+        return { sent: true, mode: "smtp", messageId: info.messageId };
+    } catch (error) {
+        console.error(`[Email Service] Failed to send email via SMTP:`, error.message);
+        return null;
     }
+}
+
+/**
+ * Multi-Provider Email Dispatcher:
+ * Automatically tries available providers without blocking registration:
+ * 1. Brevo HTTP API (if BREVO_API_KEY is configured - completely free, sends to ANY recipient)
+ * 2. Resend HTTP API (if RESEND_API_KEY is configured)
+ * 3. Nodemailer SMTP (Gmail / IPv4 forced)
+ * 4. Safe Console logging fallback
+ */
+async function sendOTPEmail(toEmail, otp) {
+    // 1. Try Brevo HTTP API first if configured (No recipient restrictions!)
+    const brevoResult = await sendViaBrevo(toEmail, otp);
+    if (brevoResult) return brevoResult;
+
+    // 2. Try Resend HTTP API
+    const resendResult = await sendViaResend(toEmail, otp);
+    if (resendResult) return resendResult;
+
+    // 3. Try Nodemailer SMTP (IPv4 forced on port 465)
+    const smtpResult = await sendViaSMTP(toEmail, otp);
+    if (smtpResult) return smtpResult;
+
+    // 4. Safe Console Fallback so testing is never blocked
+    console.log("\n=======================================================");
+    console.log(`[EMAIL FALLBACK] OTP for ${toEmail}: >>> ${otp} <<<`);
+    console.log(`Notice: To deliver emails to any address, configure BREVO_API_KEY or EMAIL_USER/EMAIL_PASSWORD`);
+    console.log("=======================================================\n");
+    return { sent: true, mode: "fallback_console", warning: "Logged to console" };
 }
 
 module.exports = {
